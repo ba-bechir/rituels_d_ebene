@@ -1,0 +1,94 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background-color: rgb(180, 132, 94);
+  color: white;
+  font-family: Arial, sans-serif;
+  justify-content: space-between;
+  height: 100px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center; /* ⬅️ Centrage vertical du logo + titre */
+}
+
+.nav-links {
+  display: flex;
+  gap: 3rem;
+  flex-grow: 1;
+  justify-content: center;
+  position: relative;
+}
+
+.nav-icons {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-links a,
+.icon-link,
+.dropdown-btn {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.nav-links a:hover,
+.icon-link:hover,
+.dropdown-btn:hover {
+  color: #ffd700;
+  text-decoration: underline;
+}
+
+/* Dropdown container */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown menu */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #966e3c;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px rgba(0,0,0,0.3);
+  z-index: 1;
+}
+
+/* Show dropdown on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Style links inside dropdown */
+.dropdown-content a {
+  color: white;
+  padding: 10px;
+  display: block;
+  font-weight: 400;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #ffd700;
+  color: black;
+}
+
+.logo {
+  height: 100px; /* ou 50px selon ton design */
+  width: auto;
+  position: relative;
+  top: 10px;
+}
+

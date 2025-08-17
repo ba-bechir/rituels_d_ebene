@@ -1,0 +1,12 @@
+
+# Node modules
+node_modules/
+
+# Fichiers d'environnement
+.env
+
+# Build React
+/build
+
+# Fichiers système (optionnel)
+.DS_Store

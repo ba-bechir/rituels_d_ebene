@@ -1,0 +1,68 @@
+/* Connexion.css */
+
+.logo {
+  display: block;
+  max-width: 150px;
+  margin: 0 auto 20px;
+}
+
+
+.connexion-container {
+  width: 400px;
+  margin: 50px auto;
+  padding: 50px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+}
+
+.connexion-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 24px;
+  color: #333;
+}
+
+.connexion-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.connexion-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline-color: #0074e4;
+  transition: border-color 0.3s;
+}
+
+.connexion-input:focus {
+  border-color: #0074e4;
+}
+
+.connexion-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #0074e4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.connexion-button:hover {
+  background-color: #005bb5;
+}
