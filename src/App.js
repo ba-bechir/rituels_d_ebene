@@ -7,6 +7,7 @@ import Connexion from './forms/connexion';
 import Utilisateurs from './components/Utilisateurs';
 import ManagePortal from './components/ManagePortal';
 import AdminRoute from './admin/AdminRoute.js';
+import ProductList from './admin/products/ProductList.js'
 
 function App() {
   const location = useLocation();
@@ -43,6 +44,15 @@ function App() {
           element={
             <AdminRoute>
               <ManagePortal />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/liste-produits"
+          element={
+            <AdminRoute>
+              <ProductList />
             </AdminRoute>
           }
         />

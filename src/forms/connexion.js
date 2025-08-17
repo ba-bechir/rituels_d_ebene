@@ -11,6 +11,7 @@ const Connexion = () => {
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
+
     try {
       const response = await fetch("http://localhost:3001/login", {
         method: "POST",
@@ -27,25 +28,21 @@ const Connexion = () => {
       const data = await response.json();
       console.log("Réponse login:", data);
 
-      // Vérifie que le rôle existe
-      if (!data.role) {
-        setMessage("Rôle non défini dans la réponse serveur");
+      if (!data.role || !data.token) {
+        setMessage("Réponse serveur invalide");
         return;
       }
 
-      // Stocke token et rôle
+      // Stocke token et rôle dans localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
 
-      // Normalise le rôle pour éviter problème de casse ou espaces
+      // Redirection selon le rôle
       const roleNormalized = data.role.trim().toLowerCase();
-
       if (roleNormalized === "admin") {
-        console.log("Redirection admin...");
-        navigate("/manage-portal");
+        navigate("/manage-portal"); // page admin
       } else {
-        console.log("Redirection utilisateur...");
-        navigate("/");
+        navigate("/"); // utilisateur classique
       }
     } catch (error) {
       setMessage("Erreur réseau ou serveur");
@@ -57,9 +54,12 @@ const Connexion = () => {
     <div className="connexion-container">
       <img src={logo} alt="Logo" className="logo" />
       <h1 className="connexion-title">Connexion</h1>
+
       <form onSubmit={handleSubmitForm}>
         <div>
-          <label htmlFor="email" className="connexion-label">Adresse e-mail</label>
+          <label htmlFor="email" className="connexion-label">
+            Adresse e-mail
+          </label>
           <input
             id="email"
             type="text"
@@ -71,7 +71,9 @@ const Connexion = () => {
         </div>
 
         <div>
-          <label htmlFor="mdp" className="connexion-label">Mot de passe</label>
+          <label htmlFor="mdp" className="connexion-label">
+            Mot de passe
+          </label>
           <input
             id="mdp"
             type="password"
@@ -82,7 +84,9 @@ const Connexion = () => {
           />
         </div>
 
-        <button type="submit" className="connexion-button">Valider</button>
+        <button type="submit" className="connexion-button">
+          Valider
+        </button>
       </form>
 
       {message && <p className="connexion-message">{message}</p>}
