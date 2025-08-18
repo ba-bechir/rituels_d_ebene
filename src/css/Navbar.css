@@ -1,31 +1,42 @@
 .navbar {
   display: flex;
-  align-items: center;
-  padding: 0 20px;
+  align-items: center;        /* centre verticalement tout le contenu */
+  justify-content: space-between;
   background-color: rgb(180, 132, 94);
   color: white;
   font-family: Arial, sans-serif;
-  justify-content: space-between;
-  height: 100px;
+  height: 100px;              /* hauteur fixe */
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .nav-left {
   display: flex;
-  align-items: center; /* ⬅️ Centrage vertical du logo + titre */
+  align-items: center;
+}
+
+.logo {
+  height: 90px;               /* légèrement plus petit que la navbar */
+  width: auto;
+  margin-top: 5px;            /* descend légèrement le logo */
 }
 
 .nav-links {
   display: flex;
   gap: 3rem;
-  flex-grow: 1;
-  justify-content: center;
-  position: relative;
+  flex-grow: 1;               /* occupe l’espace central */
+  justify-content: center;    /* liens centrés horizontalement */
+  align-items: center;        /* liens alignés verticalement avec logo */
+  margin: 0;
+  padding: 0;
+  line-height: normal;
 }
 
 .nav-icons {
   display: flex;
   gap: 1.5rem;
-  align-items: center;
+  align-items: center;        /* icônes centrées verticalement */
+  margin-right: 10px;         /* rapproche un peu du centre */
 }
 
 .nav-links a,
@@ -36,10 +47,11 @@
   font-weight: 500;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: color 0.3s ease;
   background: none;
   border: none;
   padding: 0;
+  position: relative;  /* nécessaire pour décaler avec top */
+  top: -8px;           /* déplace tout le bloc vers le haut de 5px */
 }
 
 .nav-links a:hover,
@@ -49,13 +61,12 @@
   text-decoration: underline;
 }
 
-/* Dropdown container */
+/* Dropdown */
 .dropdown {
   position: relative;
   display: inline-block;
 }
 
-/* Dropdown menu */
 .dropdown-content {
   display: none;
   position: absolute;
@@ -65,12 +76,10 @@
   z-index: 1;
 }
 
-/* Show dropdown on hover */
 .dropdown:hover .dropdown-content {
   display: block;
 }
 
-/* Style links inside dropdown */
 .dropdown-content a {
   color: white;
   padding: 10px;
@@ -84,11 +93,3 @@
   background-color: #ffd700;
   color: black;
 }
-
-.logo {
-  height: 100px; /* ou 50px selon ton design */
-  width: auto;
-  position: relative;
-  top: 10px;
-}
-

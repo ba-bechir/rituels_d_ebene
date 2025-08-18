@@ -46,26 +46,27 @@ function ProductList() {
       {message && <p>{message}</p>}
 
       {products.length > 0 ? (
-        <table>
-          <thead>
+        <table className="table">
+          <thead className="thead-dark">
             <tr>
-              <th>ID</th>
-              <th>Nom</th>
-              <th>Prix</th>
-              <th>Description</th>
+              <th scope="col">#</th>
+              <th scope="col">Nom</th>
+              <th scope="col">Prix</th>
+              <th scope="col">Quantité</th>
             </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td>{product.id}</td>
-                <td>{product.nom_produit}</td>
-                <td>{product.prix}</td>
-                <td>{product.quantite_stock}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        </thead>
+        <tbody>
+    {products.map((product, index) => (
+      <tr key={product.id}>
+        <th scope="row">{index + 1}</th>
+        <td>{product.nom_produit}</td>
+        <td>{product.prix}</td>
+        <td>{product.quantite_stock}</td>
+      </tr>
+    ))}
+      </tbody>
+</table>
+
       ) : (
         <p>Aucun produit disponible.</p>
       )}

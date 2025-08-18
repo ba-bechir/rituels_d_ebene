@@ -6,17 +6,18 @@ import '../css/Navbar.css';
 const Navbar = () => {
   return (
     <nav className="navbar">
+      {/* Logo à gauche */}
       <div className="nav-left">
         <img src={logo} alt="Logo" className="logo" />
       </div>
 
+      {/* Liens principaux centrés */}
       <div className="nav-links">
-
         <Link to="/">Accueil</Link>
 
         <div className="dropdown">
           <button className="dropdown-btn">
-            <Link to="/boutique">Boutique <FaCaretDown style={{marginLeft: '5px'}} /></Link>
+            Boutique <FaCaretDown style={{ marginLeft: '5px' }} />
           </button>
           <div className="dropdown-content">
             <Link to="/boutique/plantes-brutes">Plantes brutes</Link>
@@ -27,7 +28,7 @@ const Navbar = () => {
 
         <div className="dropdown">
           <button className="dropdown-btn">
-            E-books <FaCaretDown style={{marginLeft: '5px'}} />
+            E-books <FaCaretDown style={{ marginLeft: '5px' }} />
           </button>
           <div className="dropdown-content">
             <Link to="/ebooks/plantes-bienfaits">Plantes & Bienfaits</Link>
@@ -37,7 +38,7 @@ const Navbar = () => {
 
         <div className="dropdown">
           <button className="dropdown-btn">
-            FAQ <FaCaretDown style={{marginLeft: '5px'}} />
+            FAQ <FaCaretDown style={{ marginLeft: '5px' }} />
           </button>
           <div className="dropdown-content">
             <Link to="/faq/questions-generales">Questions générales</Link>
@@ -46,11 +47,11 @@ const Navbar = () => {
         </div>
 
         <Link to="/contact">Contact</Link>
-
       </div>
 
+      {/* Icônes à droite */}
       <div className="nav-icons">
-        <Link to="/compte" className="icon-link" aria-label="Compte"> 
+        <Link to="/compte" className="icon-link" aria-label="Compte">
           <FaUser size={24} />
           <span style={{ marginLeft: '6px' }}>Se connecter</span>
         </Link>
