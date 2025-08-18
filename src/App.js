@@ -8,6 +8,7 @@ import Utilisateurs from './components/Utilisateurs';
 import ManagePortal from './components/ManagePortal';
 import AdminRoute from './admin/AdminRoute.js';
 import ProductList from './admin/products/ProductList.js'
+import ModifierProduit from './admin/products/ModifierProduit.js';
 
 function App() {
   const location = useLocation();

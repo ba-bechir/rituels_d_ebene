@@ -4,9 +4,13 @@ import { useNavigate } from "react-router-dom";
 function ProductList() {
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
+  // Récupération produits et catégories
   useEffect(() => {
     if (!token) {
       navigate("/connexion");
@@ -16,13 +20,10 @@ function ProductList() {
     const fetchProducts = async () => {
       try {
         const response = await fetch("http://localhost:3001/liste-produits", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.status === 401 || response.status === 403) {
-          // Token invalide ou rôle non-admin
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           navigate("/connexion");
@@ -37,8 +38,83 @@ function ProductList() {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchProducts();
+    fetchCategories();
   }, [token, navigate]);
+
+  // Ouvrir modal avec produit sélectionné
+  const handleEdit = (product) => {
+    setCurrentProduct({
+      ...product,
+      id_categorie_produit: product.id_categorie_produit || "",
+    });
+    setShowModal(true);
+  };
+
+  // Gestion des changements dans le formulaire
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentProduct({ ...currentProduct, [name]: value });
+  };
+
+  // Soumission formulaire
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!currentProduct) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/produit/${currentProduct.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(currentProduct),
+        }
+      );
+
+      if (response.ok) {
+        // Récupérer le nom de la catégorie sélectionnée
+        const updatedCategory = categories.find(
+          (cat) => cat.id === Number(currentProduct.id_categorie_produit)
+        );
+
+        const updatedProduct = {
+          ...currentProduct,
+          nom_categorie: updatedCategory ? updatedCategory.nom_categorie : "",
+        };
+
+        // Met à jour le produit dans le state local
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === currentProduct.id ? updatedProduct : p
+          )
+        );
+
+        setMessage("Produit mis à jour avec succès");
+        setShowModal(false);
+      } else {
+        setMessage("Impossible de mettre à jour le produit");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur serveur");
+    }
+  };
 
   return (
     <div>
@@ -49,26 +125,127 @@ function ProductList() {
         <table className="table">
           <thead className="thead-dark">
             <tr>
-              <th scope="col">#</th>
-              <th scope="col">Nom</th>
-              <th scope="col">Prix</th>
-              <th scope="col">Quantité</th>
+              <th>#</th>
+              <th>Nom</th>
+              <th>Prix</th>
+              <th>Quantité</th>
+              <th>Catégorie</th>
+              <th>Actions</th>
             </tr>
-        </thead>
-        <tbody>
-    {products.map((product, index) => (
-      <tr key={product.id}>
-        <th scope="row">{index + 1}</th>
-        <td>{product.nom_produit}</td>
-        <td>{product.prix}</td>
-        <td>{product.quantite_stock}</td>
-      </tr>
-    ))}
-      </tbody>
-</table>
-
+          </thead>
+          <tbody>
+            {products.map((product, index) => (
+              <tr key={product.id}>
+                <th>{index + 1}</th>
+                <td>{product.nom_produit}</td>
+                <td>{product.prix}</td>
+                <td>{product.quantite_stock}</td>
+                <td>{product.nom_categorie}</td>
+                <td>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleEdit(product)}
+                  >
+                    Modifier
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : (
         <p>Aucun produit disponible.</p>
+      )}
+
+      {/* Modal édition */}
+      {showModal && currentProduct && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-sm">
+            <div
+              className="modal-content"
+              style={{ backgroundColor: "#fff", color: "#000" }}
+            >
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Modifier le produit : {currentProduct.nom_produit}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label>Nom du produit</label>
+                    <input
+                      type="text"
+                      name="nom_produit"
+                      value={currentProduct.nom_produit}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label>Prix</label>
+                    <input
+                      type="number"
+                      name="prix"
+                      value={currentProduct.prix}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label>Quantité</label>
+                    <input
+                      type="number"
+                      name="quantite_stock"
+                      value={currentProduct.quantite_stock}
+                      onChange={handleChange}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label>Catégorie</label>
+                    <select
+                      name="id_categorie_produit"
+                      value={currentProduct.id_categorie_produit || ""}
+                      onChange={handleChange}
+                      className="form-select"
+                      required
+                    >
+                      <option value="">-- Sélectionner --</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.nom_categorie}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button type="submit" className="btn btn-success me-2">
+                    Mettre à jour
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Annuler
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

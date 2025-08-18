@@ -76,13 +76,64 @@ app.get('/boutique/plantes-brutes', async (req, res) => {
   }
 });
 
+// Route pour récupérer toutes les catégories
+app.get('/categories', authorizeRole('admin'), async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection(); // connexion à la BDD
+    const [results] = await connection.execute(
+      'SELECT id, nom_categorie FROM categorie_produit ORDER BY nom_categorie'
+    );
+    res.json(results); // renvoie un tableau directement
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+// Modifier un produit
+app.put("/produit/:id", authorizeRole("admin"), async (req, res) => {
+  const { id } = req.params;
+  const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
+  let connection;
+
+  try {
+    connection = await getConnection();
+    const query = `
+      UPDATE produit 
+      SET nom_produit = ?, prix = ?, quantite_stock = ?, id_categorie_produit = ?
+      WHERE id = ?
+    `;
+    const [result] = await connection.execute(query, [
+      nom_produit,
+      prix,
+      quantite_stock,
+      id_categorie_produit,
+      id,
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Produit non trouvé" });
+    }
+
+    res.json({ message: "Produit mis à jour avec succès" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
 app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
     // Requête SQL : récupérer tous les produits
     const [results] = await connection.execute(
-      'SELECT id, nom_produit, prix, quantite_stock FROM produit'
+      'SELECT p.id, nom_produit, prix, quantite_stock, nom_categorie FROM produit p inner JOIN categorie_produit ON categorie_produit.id = p.id_categorie_produit'
     );
     res.json(results);
   } catch (err) {
@@ -90,6 +141,23 @@ app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   } finally {
     if (connection) await connection.end();
+  }
+});
+
+app.delete("/produit/:id", authorizeRole('admin'), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query("DELETE FROM produit WHERE id = $1", [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Produit non trouvé" });
+    }
+
+    res.json({ message: "Produit supprimé avec succès" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
