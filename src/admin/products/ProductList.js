@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 
 function ProductList() {
   const [products, setProducts] = useState([]);
-  const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -22,19 +22,16 @@ function ProductList() {
         const response = await fetch("http://localhost:3001/liste-produits", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (response.status === 401 || response.status === 403) {
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           navigate("/connexion");
           return;
         }
-
         const data = await response.json();
         setProducts(data);
       } catch (err) {
         console.error(err);
-        setMessage("Erreur serveur");
       }
     };
 
@@ -54,7 +51,6 @@ function ProductList() {
     fetchCategories();
   }, [token, navigate]);
 
-  // Ouvrir modal avec produit sélectionné
   const handleEdit = (product) => {
     setCurrentProduct({
       ...product,
@@ -63,13 +59,11 @@ function ProductList() {
     setShowModal(true);
   };
 
-  // Gestion des changements dans le formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCurrentProduct({ ...currentProduct, [name]: value });
   };
 
-  // Soumission formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentProduct) return;
@@ -88,7 +82,7 @@ function ProductList() {
       );
 
       if (response.ok) {
-        // Récupérer le nom de la catégorie sélectionnée
+        // Trouver la catégorie mise à jour
         const updatedCategory = categories.find(
           (cat) => cat.id === Number(currentProduct.id_categorie_produit)
         );
@@ -98,28 +92,24 @@ function ProductList() {
           nom_categorie: updatedCategory ? updatedCategory.nom_categorie : "",
         };
 
-        // Met à jour le produit dans le state local
+        // Met à jour le produit dans le state
         setProducts((prev) =>
-          prev.map((p) =>
-            p.id === currentProduct.id ? updatedProduct : p
-          )
+          prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
         );
 
-        setMessage("Produit mis à jour avec succès");
         setShowModal(false);
+        setShowSuccess(true); // Affiche modal succès
       } else {
-        setMessage("Impossible de mettre à jour le produit");
+        alert("Impossible de mettre à jour le produit");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Erreur serveur");
     }
   };
 
   return (
     <div>
       <h2>Liste des produits</h2>
-      {message && <p>{message}</p>}
 
       {products.length > 0 ? (
         <table className="table">
@@ -159,15 +149,9 @@ function ProductList() {
 
       {/* Modal édition */}
       {showModal && currentProduct && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div
-              className="modal-content"
-              style={{ backgroundColor: "#fff", color: "#000" }}
-            >
+            <div className="modal-content" style={{ backgroundColor: "#fff", color: "#000" }}>
               <div className="modal-header">
                 <h5 className="modal-title">
                   Modifier le produit : {currentProduct.nom_produit}
@@ -242,6 +226,25 @@ function ProductList() {
                     Annuler
                   </button>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal succès */}
+      {showSuccess && (
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered modal-sm">
+            <div className="modal-content text-center">
+              <div className="modal-body">
+                <p>Produit mis à jour avec succès</p>
+                <button
+                  className="btn btn-success"
+                  onClick={() => setShowSuccess(false)}
+                >
+                  OK
+                </button>
               </div>
             </div>
           </div>
