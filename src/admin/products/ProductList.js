@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -12,6 +12,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 export default function ProductList() {
@@ -23,6 +25,7 @@ export default function ProductList() {
   const [openModal, setOpenModal] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState(null);
   const [errors, setErrors] = useState({});
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -85,56 +88,69 @@ export default function ProductList() {
   };
 
   const handleModalChange = (e) => {
-  const { name, value } = e.target;
-  setModalProduct((prev) => ({
-    ...prev,
-    [name]: value, // on stocke toujours la valeur brute
-  }));
-};
- const validate = () => {
-  const newErrors = {};
-  if (!modalProduct.nom_produit?.trim()) newErrors.nom_produit = "Nom requis";
-  if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
-  if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
-  if (!modalProduct.id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
-
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
-
-  const handleModalSubmit = async () => {
-  if (!validate()) return; // bloque si champ vide
-
-  const payload = {
-    ...modalProduct,
-    prix: Number(modalProduct.prix),
-    quantite_stock: Number(modalProduct.quantite_stock),
-    id_categorie_produit: Number(modalProduct.id_categorie_produit),
+    const { name, value } = e.target;
+    setModalProduct((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const isEdit = !!modalProduct.id;
-  const url = isEdit
-    ? `http://localhost:3001/produit/${modalProduct.id}`
-    : `http://localhost:3001/produit`;
+  const validate = () => {
+    const newErrors = {};
+    if (!modalProduct.nom_produit?.trim()) newErrors.nom_produit = "Nom requis";
+    if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
+    if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
+    if (!modalProduct.id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
 
-  try {
-    const res = await fetch(url, {
-      method: isEdit ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload),
-    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (!res.ok) throw new Error("Erreur API");
+  const handleModalSubmit = async () => {
+    if (!validate()) return;
 
-    await fetchProducts(); // recharge la liste
-    setOpenModal(false);
-    setModalProduct(null);
-    setErrors({});
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors de la sauvegarde");
-  }
-};
+    const formData = new FormData();
+    formData.append("nom_produit", modalProduct.nom_produit);
+    formData.append("prix", modalProduct.prix);
+    formData.append("quantite_stock", modalProduct.quantite_stock);
+    formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
+
+    if (modalProduct.image) {
+      formData.append("image", modalProduct.image);
+    }
+
+    const isEdit = !!modalProduct.id;
+    const url = isEdit
+      ? `http://localhost:3001/produit/${modalProduct.id}`
+      : `http://localhost:3001/produit`;
+
+    try {
+      const res = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Erreur API");
+
+      await fetchProducts();
+      setOpenModal(false);
+      setModalProduct(null);
+      setErrors({});
+      setSnackbar({
+        open: true,
+        message: isEdit ? "Produit mis à jour avec succès !" : "Produit ajouté avec succès !",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        open: true,
+        message: "Erreur lors de la sauvegarde",
+        severity: "error",
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
@@ -147,9 +163,18 @@ export default function ProductList() {
 
       setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
       setDeleteProduct(null);
+      setSnackbar({
+        open: true,
+        message: "Produit supprimé avec succès !",
+        severity: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la suppression");
+      setSnackbar({
+        open: true,
+        message: "Erreur lors de la suppression",
+        severity: "error",
+      });
     }
   };
 
@@ -190,7 +215,7 @@ export default function ProductList() {
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
         <h2>Liste des produits</h2>
         <Button variant="contained" color="success" onClick={() => openEditModal()}>
-          Ajouter
+          Ajouter un produit
         </Button>
       </div>
 
@@ -243,10 +268,7 @@ export default function ProductList() {
             margin="dense"
             value={modalProduct?.prix || ""}
             onChange={handleModalChange}
-            InputProps={{
-              inputProps: { min: 0 },
-              style: { MozAppearance: "textfield" },
-            }}
+            InputProps={{ inputProps: { min: 0 }, style: { MozAppearance: "textfield" } }}
             sx={{
               "& input[type=number]::-webkit-outer-spin-button": { WebkitAppearance: "none", margin: 0 },
               "& input[type=number]::-webkit-inner-spin-button": { WebkitAppearance: "none", margin: 0 },
@@ -262,10 +284,7 @@ export default function ProductList() {
             margin="dense"
             value={modalProduct?.quantite_stock || ""}
             onChange={handleModalChange}
-            InputProps={{
-              inputProps: { min: 0 },
-              style: { MozAppearance: "textfield" },
-            }}
+            InputProps={{ inputProps: { min: 0 }, style: { MozAppearance: "textfield" } }}
             sx={{
               "& input[type=number]::-webkit-outer-spin-button": { WebkitAppearance: "none", margin: 0 },
               "& input[type=number]::-webkit-inner-spin-button": { WebkitAppearance: "none", margin: 0 },
@@ -273,35 +292,61 @@ export default function ProductList() {
             error={!!errors.quantite_stock}
             helperText={errors.quantite_stock}
           />
-
-          <FormControl fullWidth margin="dense" error={!!errors.id_categorie_produit}>
+          <TextField
+            select
+            label="Catégorie"
+            name="id_categorie_produit"
+            fullWidth
+            margin="dense"
+            value={modalProduct?.id_categorie_produit || ""}
+            onChange={handleModalChange}
+            error={!!errors.id_categorie_produit}
+            helperText={errors.id_categorie_produit || ""}
+          >
+            <MenuItem value="">-- Sélectionner --</MenuItem>
+            {categories.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.nom_categorie}
+              </MenuItem>
+            ))}
+          </TextField>
 
           <TextField
-          select
-          label="Catégorie"
-          name="id_categorie_produit"
-          fullWidth
-          margin="dense"
-          value={modalProduct?.id_categorie_produit || ""}
-          onChange={handleModalChange}
-          error={!!errors.id_categorie_produit}
-          helperText={errors.id_categorie_produit || ""} 
-        >
-          <MenuItem value="">-- Sélectionner --</MenuItem>
-          {categories.map((c) => (
-            <MenuItem key={c.id} value={c.id}>
-              {c.nom_categorie}
-            </MenuItem>
-          ))}
-        </TextField>
+            type="file"
+            fullWidth
+            margin="dense"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                setModalProduct((prev) => ({ ...prev, image: file }));
 
-  {errors.id_categorie_produit && (
-    <p style={{ color: "red", fontSize: 12, margin: 0 }}>
-      {errors.id_categorie_produit}
-    </p>
-  )}
-</FormControl>
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setModalProduct((prev) => ({ ...prev, preview: reader.result }));
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+            helperText="Choisir une image pour le produit"
+          />
 
+          {modalProduct?.preview ? (
+            <img
+              src={modalProduct.preview}
+              alt="Produit"
+              style={{ width: 100, height: 100, objectFit: "cover", marginTop: 8 }}
+            />
+          ) : modalProduct?.image ? (
+            <img
+              src={
+                typeof modalProduct.image === "string"
+                  ? `data:image/jpeg;base64,${modalProduct.image}`
+                  : URL.createObjectURL(modalProduct.image)
+              }
+              alt="Produit"
+              style={{ width: 100, height: 100, objectFit: "cover", marginTop: 8 }}
+            />
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenModal(false)} color="secondary">
@@ -328,6 +373,22 @@ export default function ProductList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar de confirmation */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
