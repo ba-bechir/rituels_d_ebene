@@ -1,4 +1,8 @@
-require('dotenv').config({ path: __dirname + '/../../.env' });
+const envFile = process.env.NODE_ENV === 'production' 
+  ? '.env.production' 
+  : '.env.development';
+
+require('dotenv').config({ path: __dirname + `/../../${envFile}` });
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
