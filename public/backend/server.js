@@ -102,8 +102,37 @@ app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
        ORDER BY p.nom_produit`
     );
 
-    // Convertir les images en base64
     const productsWithImages = results.map(p => ({
+      ...p,
+      image: p.image ? Buffer.from(p.image).toString('base64') : null
+    }));
+
+    res.json(productsWithImages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+// ==============================
+// Produits "Plantes brutes"
+// ==============================
+app.get("/plantes-brutes", async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT p.id, p.nom_produit, p.prix, p.image
+       FROM produit p
+       INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
+       WHERE c.nom_categorie = ?
+       ORDER BY p.nom_produit`,
+      ["Plantes brutes"]
+    );
+
+    const productsWithImages = rows.map(p => ({
       ...p,
       image: p.image ? Buffer.from(p.image).toString('base64') : null
     }));
