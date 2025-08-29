@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import config from '../config.js';
+
 
 export default function PlantesBrutes() {
   const [produits, setProduits] = useState([]);
@@ -8,7 +10,7 @@ export default function PlantesBrutes() {
   useEffect(() => {
     const fetchProduits = async () => {
       try {
-        const res = await fetch("http://localhost:3001/plantes-brutes", {
+        const res = await fetch(`${config.apiUrl}/plantes-brutes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

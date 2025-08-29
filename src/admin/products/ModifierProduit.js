@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import config from '../../config.js';
 
 function ModifierProduit() {
   const { id } = useParams(); // récupère l'id du produit depuis l'URL
@@ -23,7 +24,7 @@ function ModifierProduit() {
     // Récupérer le produit existant
     const fetchProduit = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/produit/${id}`, {
+        const response = await fetch(`${config.apiUrl}/produit/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -42,7 +43,7 @@ function ModifierProduit() {
     // Récupérer la liste des catégories pour le select
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:3001/categories", {
+        const response = await fetch(`${config.apiUrl}/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -65,7 +66,7 @@ function ModifierProduit() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`http://localhost:3001/produit/${id}`, {
+      const response = await fetch(`${config.apiUrl}/produit/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -2,7 +2,9 @@ const envFile = process.env.NODE_ENV === 'production'
   ? '.env.production' 
   : '.env.development';
 
-require('dotenv').config({ path: __dirname + `/../../${envFile}` });
+ const path = require('path');
+
+require('dotenv').config({ path: path.join(__dirname, envFile) });
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -12,7 +14,8 @@ const multer = require("multer");
 const { getConnection } = require('./db');
 
 const app = express();
-app.use(cors());
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
 const SECRET_JWT = process.env.SECRET_JWT;

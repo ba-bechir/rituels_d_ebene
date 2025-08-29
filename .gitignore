@@ -3,7 +3,7 @@
 node_modules/
 
 # Fichiers d'environnement
-.env.development
+.env*
 
 # Build React
 /build

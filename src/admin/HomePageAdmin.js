@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import "../css/admin/HomePageAdmin.css";
 import produitImage from "../icones/stock.png";
 import { useNavigate } from "react-router-dom";
+import config from '../config.js';
 
 function Administration() {
   const [users, setUsers] = useState([]);
@@ -23,7 +24,7 @@ function Administration() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:3001/manage-portal", {
+        const response = await fetch(`${config.apiUrl}/manage-portal`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

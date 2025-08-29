@@ -15,6 +15,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import config from '../../config.js';
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
@@ -32,7 +33,7 @@ export default function ProductList() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:3001/liste-produits", {
+      const res = await fetch(`${config.apiUrl}/liste-produits`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -53,7 +54,7 @@ export default function ProductList() {
 
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:3001/categories", {
+        const res = await fetch(`${config.apiUrl}/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -121,8 +122,8 @@ export default function ProductList() {
 
     const isEdit = !!modalProduct.id;
     const url = isEdit
-      ? `http://localhost:3001/produit/${modalProduct.id}`
-      : `http://localhost:3001/produit`;
+      ? `${config.apiUrl}/produit/${modalProduct.id}`
+      : `${config.apiUrl}/produit`;
 
     try {
       const res = await fetch(url, {
@@ -155,7 +156,7 @@ export default function ProductList() {
   const handleDelete = async () => {
     if (!deleteProduct) return;
     try {
-      const res = await fetch(`http://localhost:3001/produit/${deleteProduct.id}`, {
+      const res = await fetch(`${config.apiUrl}/produit/${deleteProduct.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
