@@ -4,6 +4,8 @@ const envFile = process.env.NODE_ENV === 'production'
 
  const path = require('path');
 
+ app.use(express.static(path.join(__dirname, 'build')));
+
 require('dotenv').config({ path: path.join(__dirname, envFile) });
 const express = require('express');
 const bcrypt = require('bcrypt');
