@@ -9,6 +9,8 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, 'build')));
 
+app.get('*', (req, res) => { if (!req.path.startsWith('/api')) { res.sendFile(path.join(__dirname, 'build', 'index.html')); } });
+
 require('dotenv').config({ path: path.join(__dirname, envFile) });
 
 const bcrypt = require('bcrypt');
