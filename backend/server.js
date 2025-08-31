@@ -1,34 +1,33 @@
-const envFile = process.env.NODE_ENV === 'production' 
-  ? '.env.production' 
-  : '.env.development';
-
- const path = require('path');
+// ==============================
+// Chargement des modules et variables d'environnement
+// ==============================
+const path = require('path');
+require('dotenv').config({
+  path: path.join(__dirname, process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development')
+});
 
 const express = require('express');
-const app = express();
-
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('*', (req, res) => { if (!req.path.startsWith('/api')) { res.sendFile(path.join(__dirname, 'build', 'index.html')); } });
-
-require('dotenv').config({ path: path.join(__dirname, envFile) });
-
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const multer = require("multer");
-
+const multer = require('multer');
 const { getConnection } = require('./db');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-app.use(cors({ origin: FRONTEND_URL }));
-app.use(express.json());
+const app = express();
 
+// ==============================
+// Variables d'environnement
+// ==============================
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const SECRET_JWT = process.env.SECRET_JWT;
 
 // ==============================
-// Multer: stockage en mémoire
+// Middleware globaux
 // ==============================
+app.use(cors({ origin: FRONTEND_URL }));
+app.use(express.json());
+
+// Multer pour upload en mémoire
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -53,8 +52,10 @@ function authorizeRole(role) {
 }
 
 // ==============================
-// Login
+// Routes API
 // ==============================
+
+// Login
 app.post('/login', async (req, res) => {
   const { email, mdp } = req.body;
   if (!email || !mdp) return res.status(400).json({ message: 'Email et mot de passe requis' });
@@ -82,9 +83,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ==============================
 // Récupérer toutes les catégories
-// ==============================
 app.get('/categories', authorizeRole('admin'), async (req, res) => {
   let connection;
   try {
@@ -95,15 +94,13 @@ app.get('/categories', authorizeRole('admin'), async (req, res) => {
     res.json(results);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: 'Erreur serveur' });
   } finally {
     if (connection) await connection.end();
   }
 });
 
-// ==============================
 // Récupérer tous les produits
-// ==============================
 app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
   let connection;
   try {
@@ -123,16 +120,14 @@ app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
     res.json(productsWithImages);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: 'Erreur serveur' });
   } finally {
     if (connection) await connection.end();
   }
 });
 
-// ==============================
 // Produits "Plantes brutes"
-// ==============================
-app.get("/plantes-brutes", async (req, res) => {
+app.get('/plantes-brutes', async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
@@ -142,7 +137,7 @@ app.get("/plantes-brutes", async (req, res) => {
        INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
        WHERE c.nom_categorie = ?
        ORDER BY p.nom_produit`,
-      ["Plantes brutes"]
+      ['Plantes brutes']
     );
 
     const productsWithImages = rows.map(p => ({
@@ -153,18 +148,15 @@ app.get("/plantes-brutes", async (req, res) => {
     res.json(productsWithImages);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: 'Erreur serveur' });
   } finally {
     if (connection) await connection.end();
   }
 });
 
-// ==============================
 // Ajouter un produit avec image
-// ==============================
 app.post('/produit', authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
-
   if (!nom_produit || prix == null || quantite_stock == null) {
     return res.status(400).json({ message: 'Champs manquants' });
   }
@@ -202,10 +194,8 @@ app.post('/produit', authorizeRole('admin'), upload.single('image'), async (req,
   }
 });
 
-// ==============================
 // Modifier un produit avec image
-// ==============================
-app.put("/produit/:id", authorizeRole("admin"), upload.single('image'), async (req, res) => {
+app.put('/produit/:id', authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
   const imageBuffer = req.file ? req.file.buffer : null;
@@ -227,40 +217,49 @@ app.put("/produit/:id", authorizeRole("admin"), upload.single('image'), async (r
       : [nom_produit, prix, quantite_stock, id_categorie_produit, id];
 
     const [result] = await connection.execute(query, params);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Produit non trouvé' });
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Produit non trouvé" });
-
-    res.json({ message: "Produit mis à jour avec succès" });
+    res.json({ message: 'Produit mis à jour avec succès' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    res.status(500).json({ message: 'Erreur serveur' });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+// Supprimer un produit
+app.delete('/produit/:id', authorizeRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  let connection;
+  try {
+    connection = await getConnection();
+    const [result] = await connection.execute('DELETE FROM produit WHERE id = ?', [id]);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Produit non trouvé' });
+    res.json({ message: 'Produit supprimé avec succès' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
   } finally {
     if (connection) await connection.end();
   }
 });
 
 // ==============================
-// Supprimer un produit
+// Servir le front React
 // ==============================
-app.delete("/produit/:id", authorizeRole('admin'), async (req, res) => {
-  const { id } = req.params;
-  let connection;
-  try {
-    connection = await getConnection();
-    const [result] = await connection.execute("DELETE FROM produit WHERE id = ?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Produit non trouvé" });
-    res.json({ message: "Produit supprimé avec succès" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
-  } finally {
-    if (connection) await connection.end();
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
   }
 });
 
 // ==============================
 // Démarrage du serveur
 // ==============================
-app.listen(3001, () => {
-  console.log('API démarrée sur http://localhost:3001');
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`API démarrée sur http://localhost:${PORT}`);
 });
