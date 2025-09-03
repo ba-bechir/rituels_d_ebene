@@ -56,7 +56,7 @@ function authorizeRole(role) {
 // ==============================
 
 // Login
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, mdp } = req.body;
   if (!email || !mdp) return res.status(400).json({ message: 'Email et mot de passe requis' });
 
@@ -84,7 +84,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Récupérer toutes les catégories
-app.get('/categories', authorizeRole('admin'), async (req, res) => {
+app.get('/api/categories', authorizeRole('admin'), async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
@@ -101,7 +101,7 @@ app.get('/categories', authorizeRole('admin'), async (req, res) => {
 });
 
 // Récupérer tous les produits
-app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
+app.get('/api/liste-produits', authorizeRole('admin'), async (req, res) => {
 
   let connection;
   try {
@@ -128,7 +128,7 @@ app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
 });
 
 // Produits "Plantes brutes"
-app.get('/plantes-brutes', async (req, res) => {
+app.get('/api/plantes-brutes', async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
@@ -156,7 +156,7 @@ app.get('/plantes-brutes', async (req, res) => {
 });
 
 // Ajouter un produit avec image
-app.post('/produit', authorizeRole('admin'), upload.single('image'), async (req, res) => {
+app.post('/api/produit', authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
   if (!nom_produit || prix == null || quantite_stock == null) {
     return res.status(400).json({ message: 'Champs manquants' });
@@ -196,7 +196,7 @@ app.post('/produit', authorizeRole('admin'), upload.single('image'), async (req,
 });
 
 // Modifier un produit avec image
-app.put('/produit/:id', authorizeRole('admin'), upload.single('image'), async (req, res) => {
+app.put('/api/produit/:id', authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
   const imageBuffer = req.file ? req.file.buffer : null;
@@ -230,7 +230,7 @@ app.put('/produit/:id', authorizeRole('admin'), upload.single('image'), async (r
 });
 
 // Supprimer un produit
-app.delete('/produit/:id', authorizeRole('admin'), async (req, res) => {
+app.delete('/api/produit/:id', authorizeRole('admin'), async (req, res) => {
   const { id } = req.params;
   let connection;
   try {
