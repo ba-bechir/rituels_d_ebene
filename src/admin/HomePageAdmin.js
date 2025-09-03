@@ -42,7 +42,6 @@ function Administration() {
         setUsers(data);
       } catch (err) {
         console.error(err);
-        setMessage("Erreur serveur");
       }
     };
 

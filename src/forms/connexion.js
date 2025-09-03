@@ -88,9 +88,20 @@ const Connexion = () => {
           Valider
         </button>
       </form>
-
       {message && <p className="connexion-message">{message}</p>}
+
+      {/* --- Nouveau bloc "Créer un compte" --- */}
+    <div className="create-account-container">
+      <p className="new-client-text">Nouveau client ?</p>
+      <button
+        className="connexion-button create-account-button"
+        onClick={() => navigate("/register")}
+      >
+        Créer un compte
+      </button>
     </div>
+  </div>
+   
   );
 };
 

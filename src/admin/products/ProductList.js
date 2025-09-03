@@ -183,7 +183,7 @@ export default function ProductList() {
   const columns = [
     { field: "nom_produit", headerName: "Nom", width: 200 },
     { field: "prix", headerName: "Prix", width: 100 },
-    { field: "quantite_stock", headerName: "Quantité", width: 100 },
+    { field: "quantite_stock", headerName: "Quantité en stock", width: 100 },
     { field: "nom_categorie", headerName: "Catégorie", width: 150 },
     {
       field: "actions",
@@ -279,7 +279,7 @@ export default function ProductList() {
             helperText={errors.prix}
           />
           <TextField
-            label="Quantité"
+            label="Quantité en stock"
             name="quantite_stock"
             type="number"
             fullWidth

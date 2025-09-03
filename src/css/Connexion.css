@@ -8,12 +8,12 @@
 
 
 .connexion-container {
-  width: 400px;
-  margin: 50px auto;
-  padding: 50px;
+  width: 450px;          /* un peu plus large */
+  margin: 60px auto;     /* plus de marge verticale */
+  padding: 60px 50px;    /* plus de padding interne */
   border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;    /* arrondi un peu plus large */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* ombre plus douce */
   font-family: Arial, sans-serif;
   background-color: #fff;
 }
@@ -53,7 +53,7 @@
 .connexion-button {
   width: 100%;
   padding: 12px;
-  background-color: #0074e4;
+  background-color: #b4845e;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -66,3 +66,64 @@
 .connexion-button:hover {
   background-color: #005bb5;
 }
+
+.create-account-container {
+  margin-top: 30px;
+  padding: 20px;
+  border: 2px solid #b4845e; /* contour doré */
+  text-align: center;
+  background-color: #fff; /* fond du bloc blanc */
+  border-radius: 8px;
+}
+
+.create-account-container p {
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.create-account-button {
+  background-color: #fff; /* bouton blanc */
+  color: #b4845e;        /* texte doré */
+  border: 2px solid #b4845e; /* contour du bouton */
+  padding: 10px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.create-account-button:hover {
+  background-color: #b4845e; /* fond doré au hover */
+  color: #fff;                /* texte blanc au hover */
+}
+
+.new-client-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  color: #b4845e; /* doré */
+  position: relative;
+  display: inline-block;
+  padding-bottom: 5px;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+.new-client-text::after {
+  content: "";
+  position: absolute;
+  width: 60px;           /* longueur de la ligne */
+  height: 3px;            /* épaisseur */
+  background: #b4845e;    /* couleur doré */
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.new-client-text:hover::after {
+  width: 100px; /* s’étire au hover */
+}
+
