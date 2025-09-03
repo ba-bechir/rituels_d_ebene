@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import config from '../config.js';
 
 
+
 export default function PlantesBrutes() {
   const [produits, setProduits] = useState([]);
   const [hoveredId, setHoveredId] = useState(null);
@@ -11,9 +12,10 @@ export default function PlantesBrutes() {
     const fetchProduits = async () => {
       try {
         const res = await fetch(`${config.apiUrl}/plantes-brutes`, {
-          headers: { Authorization: `Bearer ${token}` },
+          //headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
+        console.log(res.url)
         setProduits(data || []);
       } catch (err) {
         console.error(err);

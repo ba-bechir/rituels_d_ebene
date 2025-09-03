@@ -36,6 +36,7 @@ export default function ProductList() {
       const res = await fetch(`${config.apiUrl}/liste-produits`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(res.url)
       const data = await res.json();
       setProducts(
         data.map((p) => ({

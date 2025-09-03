@@ -3,7 +3,7 @@
 // ==============================
 const path = require('path');
 require('dotenv').config({
-  path: path.join(__dirname, process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development')
+  path: path.join(__dirname, '..', process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development')
 });
 
 const express = require('express');
@@ -102,6 +102,7 @@ app.get('/categories', authorizeRole('admin'), async (req, res) => {
 
 // Récupérer tous les produits
 app.get('/liste-produits', authorizeRole('admin'), async (req, res) => {
+
   let connection;
   try {
     connection = await getConnection();
@@ -242,17 +243,6 @@ app.delete('/produit/:id', authorizeRole('admin'), async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   } finally {
     if (connection) await connection.end();
-  }
-});
-
-// ==============================
-// Servir le front React
-// ==============================
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
   }
 });
 

@@ -1,10 +1,14 @@
+const path = require('path');
+const mysql = require('mysql2/promise');
+
 const envFile = process.env.NODE_ENV === 'production' 
   ? '.env.production' 
   : '.env.development';
 
-require('dotenv').config({ path: __dirname + `/../../${envFile}` });
+const envPath = path.join(__dirname, '..', envFile);
 
-const mysql = require('mysql2/promise');
+require('dotenv').config({ path: envPath });
+
 
 const dbConfig = {
   host: process.env.DB_HOST,
