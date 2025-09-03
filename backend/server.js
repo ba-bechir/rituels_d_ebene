@@ -20,15 +20,11 @@ const app = express();
 // ==============================
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const SECRET_JWT = process.env.SECRET_JWT;
-
+const BASE_PATH = process.env.NODE_ENV === 'production' ? '/api' : '';
 // ==============================
 // Middleware globaux
 // ==============================
-app.use(cors({
-  origin: FRONTEND_URL,       // autorise seulement ton front
-  methods: ['GET','POST','PUT','DELETE'],
-  credentials: true           // si tu passes un token ou cookie
-}));
+app.use(cors());
 app.use(express.json());
 
 // Multer pour upload en mémoire
@@ -60,7 +56,7 @@ function authorizeRole(role) {
 // ==============================
 
 // Login
-app.post('/api/login', async (req, res) => {
+app.post(`${BASE_PATH}/login`, async (req, res) => {
   const { email, mdp } = req.body;
   if (!email || !mdp) return res.status(400).json({ message: 'Email et mot de passe requis' });
 
@@ -88,7 +84,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Récupérer toutes les catégories
-app.get('/api/categories', authorizeRole('admin'), async (req, res) => {
+app.get(`${BASE_PATH}/categories`, authorizeRole('admin'), async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
@@ -105,7 +101,7 @@ app.get('/api/categories', authorizeRole('admin'), async (req, res) => {
 });
 
 // Récupérer tous les produits
-app.get('/api/liste-produits', authorizeRole('admin'), async (req, res) => {
+app.get(`${BASE_PATH}/liste-produits`, authorizeRole('admin'), async (req, res) => {
 
   let connection;
   try {
@@ -132,7 +128,7 @@ app.get('/api/liste-produits', authorizeRole('admin'), async (req, res) => {
 });
 
 // Produits "Plantes brutes"
-app.get('/api/plantes-brutes', async (req, res) => {
+app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
@@ -160,7 +156,7 @@ app.get('/api/plantes-brutes', async (req, res) => {
 });
 
 // Ajouter un produit avec image
-app.post('/api/produit', authorizeRole('admin'), upload.single('image'), async (req, res) => {
+app.post(`${BASE_PATH}/produit`, authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
   if (!nom_produit || prix == null || quantite_stock == null) {
     return res.status(400).json({ message: 'Champs manquants' });
@@ -200,7 +196,7 @@ app.post('/api/produit', authorizeRole('admin'), upload.single('image'), async (
 });
 
 // Modifier un produit avec image
-app.put('/api/produit/:id', authorizeRole('admin'), upload.single('image'), async (req, res) => {
+app.put(`${BASE_PATH}/produit/:id`, authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
   const imageBuffer = req.file ? req.file.buffer : null;
@@ -234,7 +230,7 @@ app.put('/api/produit/:id', authorizeRole('admin'), upload.single('image'), asyn
 });
 
 // Supprimer un produit
-app.delete('/api/produit/:id', authorizeRole('admin'), async (req, res) => {
+app.delete(`${BASE_PATH}/produit/:id`, authorizeRole('admin'), async (req, res) => {
   const { id } = req.params;
   let connection;
   try {
