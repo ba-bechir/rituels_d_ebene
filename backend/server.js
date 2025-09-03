@@ -24,7 +24,11 @@ const SECRET_JWT = process.env.SECRET_JWT;
 // ==============================
 // Middleware globaux
 // ==============================
-app.use(cors({ origin: FRONTEND_URL }));
+app.use(cors({
+  origin: FRONTEND_URL,       // autorise seulement ton front
+  methods: ['GET','POST','PUT','DELETE'],
+  credentials: true           // si tu passes un token ou cookie
+}));
 app.use(express.json());
 
 // Multer pour upload en mémoire

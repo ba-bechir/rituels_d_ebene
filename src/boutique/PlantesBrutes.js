@@ -11,7 +11,7 @@ export default function PlantesBrutes() {
   useEffect(() => {
     const fetchProduits = async () => {
       try {
-        const res = await fetch(`${config.apiUrl}/plantes-brutes`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/plantes-brutes`, {
           //headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
