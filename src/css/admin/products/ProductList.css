@@ -1,0 +1,77 @@
+/* ProductList.css */
+
+.container {
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.filter-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-control-min-width {
+  min-width: 180px;
+}
+
+.data-grid-container {
+  height: 600px;
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 100%;
+}
+
+.radio-group-container {
+  display: flex;
+  gap: 16px;
+  padding-left: 12px;
+  justify-content: flex-start;
+}
+
+.radio-button {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  background-color: transparent;
+  transition: 0.2s;
+}
+
+.radio-button.selected {
+  border-color: #1976d2; /* primary.main */
+  background-color: #bbdefb; /* primary.light */
+}
+
+.radio-button:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-top: 8px;
+}
+
+/* Supprimer les flèches des inputs number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

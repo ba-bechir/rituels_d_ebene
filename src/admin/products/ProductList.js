@@ -1,21 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { TextField, MenuItem, Select, FormControl, InputLabel, Button,  Dialog,  DialogTitle, DialogContent, DialogActions, Snackbar, Alert, RadioGroup, 
+  FormControlLabel, Radio, FormLabel, FormHelperText} from "@mui/material";
 import config from '../../config.js';
+import '../../css/admin/products/ProductList.css'; // import du CSS
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
@@ -33,18 +22,13 @@ export default function ProductList() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${config.apiUrl}/liste-produits`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log(res.url)
+      const res = await fetch(`${config.apiUrl}/liste-produits`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
-      setProducts(
-        data.map((p) => ({
-          ...p,
-          id_categorie_produit: p.id_categorie_produit ? Number(p.id_categorie_produit) : null,
-          nom_categorie: p.nom_categorie || "",
-        }))
-      );
+      setProducts(data.map((p) => ({
+        ...p,
+        id_categorie_produit: p.id_categorie_produit ? Number(p.id_categorie_produit) : null,
+        nom_categorie: p.nom_categorie || "",
+      })));
     } catch (err) {
       console.error(err);
     }
@@ -55,9 +39,7 @@ export default function ProductList() {
 
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${config.apiUrl}/categories`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${config.apiUrl}/categories`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -69,7 +51,6 @@ export default function ProductList() {
     fetchCategories();
   }, [token, navigate]);
 
-  // Filtrage insensible à la casse et accents
   const normalizeText = (text) =>
     text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -80,21 +61,14 @@ export default function ProductList() {
   });
 
   const openEditModal = (product = null) => {
-    setModalProduct(
-      product
-        ? { ...product }
-        : { nom_produit: "", prix: "", quantite_stock: "", id_categorie_produit: "" }
-    );
+    setModalProduct(product ? { ...product } : { nom_produit: "", prix: "", quantite_stock: "", id_categorie_produit: "" });
     setErrors({});
     setOpenModal(true);
   };
 
   const handleModalChange = (e) => {
     const { name, value } = e.target;
-    setModalProduct((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setModalProduct((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
@@ -103,28 +77,21 @@ export default function ProductList() {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
     if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
     if (!modalProduct.id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleModalSubmit = async () => {
     if (!validate()) return;
-
     const formData = new FormData();
     formData.append("nom_produit", modalProduct.nom_produit);
     formData.append("prix", modalProduct.prix);
     formData.append("quantite_stock", modalProduct.quantite_stock);
     formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
-
-    if (modalProduct.image) {
-      formData.append("image", modalProduct.image);
-    }
+    if (modalProduct.image) formData.append("image", modalProduct.image);
 
     const isEdit = !!modalProduct.id;
-    const url = isEdit
-      ? `${config.apiUrl}/produit/${modalProduct.id}`
-      : `${config.apiUrl}/produit`;
+    const url = isEdit ? `${config.apiUrl}/produit/${modalProduct.id}` : `${config.apiUrl}/produit`;
 
     try {
       const res = await fetch(url, {
@@ -132,25 +99,15 @@ export default function ProductList() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
       if (!res.ok) throw new Error("Erreur API");
-
       await fetchProducts();
       setOpenModal(false);
       setModalProduct(null);
       setErrors({});
-      setSnackbar({
-        open: true,
-        message: isEdit ? "Produit mis à jour avec succès !" : "Produit ajouté avec succès !",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: isEdit ? "Produit mis à jour !" : "Produit ajouté !", severity: "success" });
     } catch (err) {
       console.error(err);
-      setSnackbar({
-        open: true,
-        message: "Erreur lors de la sauvegarde",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Erreur lors de la sauvegarde", severity: "error" });
     }
   };
 
@@ -162,21 +119,12 @@ export default function ProductList() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Erreur API");
-
       setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
       setDeleteProduct(null);
-      setSnackbar({
-        open: true,
-        message: "Produit supprimé avec succès !",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Produit supprimé !", severity: "success" });
     } catch (err) {
       console.error(err);
-      setSnackbar({
-        open: true,
-        message: "Erreur lors de la suppression",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Erreur lors de la suppression", severity: "error" });
     }
   };
 
@@ -190,204 +138,92 @@ export default function ProductList() {
       headerName: "Actions",
       width: 220,
       renderCell: (params) => (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", height: "100%" }}>
-          <Button
-            onClick={() => openEditModal(params.row)}
-            variant="contained"
-            color="primary"
-            size="small"
-          >
-            Modifier
-          </Button>
-          <Button
-            onClick={() => setDeleteProduct(params.row)}
-            variant="contained"
-            color="error"
-            size="small"
-          >
-            Supprimer
-          </Button>
+        <div className="action-buttons">
+          <Button onClick={() => openEditModal(params.row)} variant="contained" color="primary" size="small">Modifier</Button>
+          <Button onClick={() => setDeleteProduct(params.row)} variant="contained" color="error" size="small">Supprimer</Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+    <div className="container">
+      <div className="header">
         <h2>Liste des produits</h2>
-        <Button variant="contained" color="success" onClick={() => openEditModal()}>
-          Ajouter un produit
-        </Button>
+        <Button variant="contained" color="success" onClick={() => openEditModal()}>Ajouter un produit</Button>
       </div>
 
-      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-        <TextField
-          label="Rechercher"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <FormControl style={{ minWidth: 180 }}>
+      <div className="filter-container">
+        <TextField label="Rechercher" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <FormControl className="form-control-min-width">
           <InputLabel>Catégorie</InputLabel>
           <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <MenuItem value="">Toutes</MenuItem>
-            {categories.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.nom_categorie}
-              </MenuItem>
-            ))}
+            {categories.map((c) => <MenuItem key={c.id} value={c.id}>{c.nom_categorie}</MenuItem>)}
           </Select>
         </FormControl>
       </div>
 
-      <div style={{ height: 600, width: "100%" }}>
+      <div className="data-grid-container">
         <DataGrid rows={filteredProducts} columns={columns} pageSize={10} />
       </div>
 
       {/* Modal ajout/modif */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-        <DialogTitle>
-          {modalProduct?.id
-            ? `Modifier le produit : ${modalProduct.nom_produit}`
-            : "Ajouter un produit"}
-        </DialogTitle>
+        <DialogTitle>{modalProduct?.id ? `Modifier le produit : ${modalProduct.nom_produit}` : "Ajouter un produit"}</DialogTitle>
         <DialogContent>
-          <TextField
-            label="Nom"
-            name="nom_produit"
-            fullWidth
-            margin="dense"
-            value={modalProduct?.nom_produit || ""}
-            onChange={handleModalChange}
-            error={!!errors.nom_produit}
-            helperText={errors.nom_produit}
-          />
-          <TextField
-            label="Prix"
-            name="prix"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={modalProduct?.prix || ""}
-            onChange={handleModalChange}
-            InputProps={{ inputProps: { min: 0 }, style: { MozAppearance: "textfield" } }}
-            sx={{
-              "& input[type=number]::-webkit-outer-spin-button": { WebkitAppearance: "none", margin: 0 },
-              "& input[type=number]::-webkit-inner-spin-button": { WebkitAppearance: "none", margin: 0 },
-            }}
-            error={!!errors.prix}
-            helperText={errors.prix}
-          />
-          <TextField
-            label="Quantité en stock"
-            name="quantite_stock"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={modalProduct?.quantite_stock || ""}
-            onChange={handleModalChange}
-            InputProps={{ inputProps: { min: 0 }, style: { MozAppearance: "textfield" } }}
-            sx={{
-              "& input[type=number]::-webkit-outer-spin-button": { WebkitAppearance: "none", margin: 0 },
-              "& input[type=number]::-webkit-inner-spin-button": { WebkitAppearance: "none", margin: 0 },
-            }}
-            error={!!errors.quantite_stock}
-            helperText={errors.quantite_stock}
-          />
-          <TextField
-            select
-            label="Catégorie"
-            name="id_categorie_produit"
-            fullWidth
-            margin="dense"
-            value={modalProduct?.id_categorie_produit || ""}
-            onChange={handleModalChange}
-            error={!!errors.id_categorie_produit}
-            helperText={errors.id_categorie_produit || ""}
-          >
+          <TextField label="Nom" name="nom_produit" fullWidth margin="dense" value={modalProduct?.nom_produit || ""} onChange={handleModalChange} error={!!errors.nom_produit} helperText={errors.nom_produit} />
+
+          <FormControl component="fieldset" fullWidth margin="dense" error={!!errors.mode_vente}>
+            <FormLabel component="legend">Mode de vente</FormLabel>
+            <RadioGroup row name="mode_vente" value={modalProduct?.mode_vente || ""} onChange={handleModalChange} className="radio-group-container">
+              {["gramme", "boite"].map((option) => (
+                <FormControlLabel key={option} value={option} control={<Radio style={{ display: "none" }} />} label={option === "gramme" ? "Gramme" : "Boîte"} className={`radio-button ${modalProduct?.mode_vente === option ? "selected" : ""}`} />
+              ))}
+            </RadioGroup>
+            {errors.mode_vente && <FormHelperText>{errors.mode_vente}</FormHelperText>}
+          </FormControl>
+
+          <TextField label="Quantité en stock" name="quantite_stock" type="number" fullWidth margin="dense" value={modalProduct?.quantite_stock || ""} onChange={handleModalChange} className="number-input" error={!!errors.quantite_stock} helperText={errors.quantite_stock} />
+
+          <TextField select label="Catégorie" name="id_categorie_produit" fullWidth margin="dense" value={modalProduct?.id_categorie_produit || ""} onChange={handleModalChange} error={!!errors.id_categorie_produit} helperText={errors.id_categorie_produit || ""}>
             <MenuItem value="">-- Sélectionner --</MenuItem>
-            {categories.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.nom_categorie}
-              </MenuItem>
-            ))}
+            {categories.map((c) => <MenuItem key={c.id} value={c.id}>{c.nom_categorie}</MenuItem>)}
           </TextField>
 
-          <TextField
-            type="file"
-            fullWidth
-            margin="dense"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                setModalProduct((prev) => ({ ...prev, image: file }));
+          <TextField type="file" fullWidth margin="dense" onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              const file = e.target.files[0];
+              setModalProduct((prev) => ({ ...prev, image: file }));
+              const reader = new FileReader();
+              reader.onloadend = () => { setModalProduct((prev) => ({ ...prev, preview: reader.result })); };
+              reader.readAsDataURL(file);
+            }
+          }} helperText="Choisir une image pour le produit" />
 
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setModalProduct((prev) => ({ ...prev, preview: reader.result }));
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            helperText="Choisir une image pour le produit"
-          />
-
-          {modalProduct?.preview ? (
-            <img
-              src={modalProduct.preview}
-              alt="Produit"
-              style={{ width: 100, height: 100, objectFit: "cover", marginTop: 8 }}
-            />
-          ) : modalProduct?.image ? (
-            <img
-              src={
-                typeof modalProduct.image === "string"
-                  ? `data:image/jpeg;base64,${modalProduct.image}`
-                  : URL.createObjectURL(modalProduct.image)
-              }
-              alt="Produit"
-              style={{ width: 100, height: 100, objectFit: "cover", marginTop: 8 }}
-            />
-          ) : null}
+          {modalProduct?.preview && <img src={modalProduct.preview} alt="Produit" className="modal-image" />}
+          {!modalProduct?.preview && modalProduct?.image && <img src={typeof modalProduct.image === "string" ? `data:image/jpeg;base64,${modalProduct.image}` : URL.createObjectURL(modalProduct.image)} alt="Produit" className="modal-image" />}
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={() => setOpenModal(false)} color="secondary">
-            Annuler
-          </Button>
-          <Button onClick={handleModalSubmit} color="primary">
-            {modalProduct?.id ? "Mettre à jour" : "Ajouter"}
-          </Button>
+          <Button onClick={() => setOpenModal(false)} color="secondary">Annuler</Button>
+          <Button onClick={handleModalSubmit} color="primary">{modalProduct?.id ? "Mettre à jour" : "Ajouter"}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Modal suppression */}
       <Dialog open={!!deleteProduct} onClose={() => setDeleteProduct(null)}>
         <DialogTitle>Confirmer la suppression</DialogTitle>
-        <DialogContent>
-          Voulez-vous vraiment supprimer <strong>{deleteProduct?.nom_produit}</strong> ?
-        </DialogContent>
+        <DialogContent>Voulez-vous vraiment supprimer <strong>{deleteProduct?.nom_produit}</strong> ?</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteProduct(null)} color="secondary">
-            Annuler
-          </Button>
-          <Button onClick={handleDelete} color="error">
-            Supprimer
-          </Button>
+          <Button onClick={() => setDeleteProduct(null)} color="secondary">Annuler</Button>
+          <Button onClick={handleDelete} color="error">Supprimer</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar de confirmation */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
+      {/* Snackbar */}
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} style={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
