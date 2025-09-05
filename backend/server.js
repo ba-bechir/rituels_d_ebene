@@ -178,9 +178,7 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
     uv.prix AS prix_unite,
     p.image,
     uv.quantite_en_g,
-    uv.quantite_en_sachet,
-    uv.stock AS quantite_stock,
-    uv.description AS description_unite
+    p.description AS description_unite
 FROM produit p
 INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
 INNER JOIN unite_vente uv ON uv.id_produit = p.id
