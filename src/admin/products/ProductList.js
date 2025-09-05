@@ -97,10 +97,11 @@ export default function ProductList() {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
     if (!modalProduct.poids?.toString().trim()) newErrors.poids = "Poids requis";
     if (!modalProduct.quantite_gramme_stock?.toString().trim()) newErrors.quantite_gramme_stock = "Quantité en grammes requise";
+
   } else if (modalProduct.mode_vente === "boite") {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
-    if (!modalProduct.quantite_par_boite?.toString().trim()) newErrors.quantite_par_boite = "Quantité par boîte requise";
-    if (!modalProduct.quantite_boite_stock?.toString().trim()) newErrors.quantite_boite_stock = "Quantité de boîtes en stock requise";
+    if (!modalProduct.quantite_en_sachet?.toString().trim()) newErrors.quantite_en_sachet = "Quantité par boîte requise";
+
   }
 
   if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
@@ -113,10 +114,22 @@ export default function ProductList() {
   const handleModalSubmit = async () => {
     if (!validate()) return;
     const formData = new FormData();
-    formData.append("nom_produit", modalProduct.nom_produit);
+      formData.append("id_produit", modalProduct.id_produit); 
+      formData.append("nom_produit", modalProduct.nom_produit);
+      formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
+      formData.append("description", modalProduct.description || "");
+      formData.append("quantite_stock", modalProduct.quantite_stock || "");
+
+  if (modalProduct.mode_vente === "gramme") {
     formData.append("prix", modalProduct.prix);
-    formData.append("quantite_stock", modalProduct.quantite_stock);
-    formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
+    formData.append("poids", modalProduct.poids);
+    formData.append("quantite_en_g", modalProduct.quantite_en_g);
+
+  } else if (modalProduct.mode_vente === "boite") {
+    formData.append("prix", modalProduct.prix);
+    formData.append("quantite_par_boite", modalProduct.quantite_par_boite);
+    formData.append("quantite_en_sachet", modalProduct.quantite_en_sachet);
+  }
     if (modalProduct.image) formData.append("image", modalProduct.image);
 
     const isEdit = !!modalProduct.id;
@@ -229,7 +242,7 @@ export default function ProductList() {
               />
               <TextField
                 label="Poids en grammes"
-                name="poids"
+                name="quantite_en_g"
                 type="number"
                 fullWidth
                 margin="dense"
@@ -240,7 +253,7 @@ export default function ProductList() {
               />
               <TextField
                   label="Quantité de grammes en stock"
-                  name="quantite_gramme_stock"
+                  name="quantite_stock"
                   type="number"
                   fullWidth
                   margin="dense"
@@ -268,27 +281,27 @@ export default function ProductList() {
                 />
                 <TextField
                   label="Quantité par boîte"
-                  name="quantite_par_boite"
+                  name="quantite_en_sachet"
                   type="number"
                   fullWidth
                   margin="dense"
                   className="conditional-field"
-                  value={modalProduct?.quantite_par_boite || ""}
+                  value={modalProduct?.quantite_en_sachet || ""}
                   onChange={handleModalChange}
-                  error={!!errors.quantite_par_boite}
-                  helperText={errors.quantite_par_boite}
+                  error={!!errors.quantite_en_sachet}
+                  helperText={errors.quantite_en_sachet}
                 />
                 <TextField
-                  label="Quantité de boîtes en stock"
-                  name="quantite_boite_stock"
+                  label="Nombre de boîtes en stock"
+                  name="quantite_stock"
                   type="number"
                   fullWidth
                   margin="dense"
                   className="conditional-field"
-                  value={modalProduct?.quantite_boite_stock || ""}
+                  value={modalProduct?.quantite_stock || ""}
                   onChange={handleModalChange}
-                  error={!!errors.quantite_boite_stock}
-                  helperText={errors.quantite_boite_stock}
+                  error={!!errors.quantite_stock}
+                  helperText={errors.quantite_stock}
                 />
               </>
             )}
@@ -297,6 +310,21 @@ export default function ProductList() {
             <MenuItem value="">-- Sélectionner --</MenuItem>
             {categories.map((c) => <MenuItem key={c.id} value={c.id}>{c.nom_categorie}</MenuItem>)}
           </TextField>
+
+            {/* Description commune pour les deux modes */}
+          <TextField
+            label="Description"
+            name="description"
+            multiline
+            rows={3}
+            fullWidth
+            margin="dense"
+            className="conditional-field"
+            value={modalProduct?.description || ""}
+            onChange={handleModalChange}
+            error={!!errors.description}
+            helperText={errors.description}
+          />
 
           <TextField type="file" fullWidth margin="dense" onChange={(e) => {
             if (e.target.files && e.target.files[0]) {
