@@ -107,15 +107,33 @@ app.get(`${BASE_PATH}/liste-produits`, authorizeRole('admin'), async (req, res) 
   try {
     connection = await getConnection();
     const [results] = await connection.execute(
-      `SELECT p.id, p.nom_produit, p.prix, p.quantite_stock, p.id_categorie_produit, c.nom_categorie, p.image
-       FROM produit p
-       LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
-       ORDER BY p.nom_produit`
+`SELECT 
+      p.id, 
+      p.nom_produit, 
+      uv.prix AS prix_produit, 
+      p.id_categorie_produit, 
+      c.nom_categorie, 
+      p.image,
+      uv.id AS id_unite_vente,
+      uv.quantite_en_g,
+      uv.quantite_en_sachet,
+      uv.prix AS prix_unite,
+      uv.quantite_stock AS quantite_stock,
+      p.description AS description_unite
+   FROM produit p
+   LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
+   LEFT JOIN unite_vente uv ON uv.id_produit = p.id
+   ORDER BY p.nom_produit`
     );
 
-    const productsWithImages = results.map(p => ({
+      const productsWithImages = results.map(p => ({
       ...p,
-      image: p.image ? Buffer.from(p.image).toString('base64') : null
+      image: p.image ? Buffer.from(p.image).toString('base64') : null,
+      prix: p.prix_unite,
+      quantite_stock: p.quantite_stock,
+      quantite_en_g: p.quantite_en_g,
+      quantite_en_sachet: p.quantite_en_sachet,
+      mode_vente: p.quantite_en_g ? 'gramme' : 'boite'
     }));
 
     res.json(productsWithImages);
@@ -133,11 +151,20 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
   try {
     connection = await getConnection();
     const [rows] = await connection.execute(
-      `SELECT p.id, p.nom_produit, p.prix, p.image
-       FROM produit p
-       INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
-       WHERE c.nom_categorie = ?
-       ORDER BY p.nom_produit`,
+      `SELECT 
+    p.id,
+    p.nom_produit,
+    uv.prix AS prix_unite,
+    p.image,
+    uv.quantite_en_g,
+    uv.quantite_en_sachet,
+    uv.stock AS quantite_stock,
+    uv.description AS description_unite
+FROM produit p
+INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
+INNER JOIN unite_vente uv ON uv.id_produit = p.id
+WHERE c.nom_categorie = ?
+ORDER BY p.nom_produit`,
       ['Plantes brutes']
     );
 
@@ -157,31 +184,92 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
 
 // Ajouter un produit avec image
 app.post(`${BASE_PATH}/produit`, authorizeRole('admin'), upload.single('image'), async (req, res) => {
-  const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
-  if (!nom_produit || prix == null || quantite_stock == null) {
-    return res.status(400).json({ message: 'Champs manquants' });
+  const {
+    nom_produit,
+    prix,
+    quantite_stock,
+    id_categorie_produit,
+    mode_vente,
+    quantite_en_g,
+    quantite_en_sachet,
+    description
+  } = req.body;
+ 
+
+  // Validation côté serveur
+  const newErrors = {};
+  if (!nom_produit?.trim()) newErrors.nom_produit = "Nom requis";
+  if (prix == null) newErrors.prix = "Prix requis";
+  if (quantite_stock == null) newErrors.quantite_stock = "Quantité requise";
+  if (!id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
+
+
+  if (mode_vente === "gramme") {
+    if (quantite_en_g == null) newErrors.quantite_en_g = "Poids requis";
+  } else if (mode_vente === "boite") {
+    if (quantite_en_sachet == null) newErrors.quantite_en_sachet = "Quantité par boîte requise";
   }
+
+  if (Object.keys(newErrors).length) return res.status(400).json({ errors: newErrors });
 
   let connection;
   try {
     connection = await getConnection();
     const imageBuffer = req.file ? req.file.buffer : null;
 
+
+    // 1️⃣ Insertion du produit
     const [result] = await connection.execute(
-      `INSERT INTO produit (nom_produit, prix, quantite_stock, id_categorie_produit, image)
-       VALUES (?, ?, ?, ?, ?)`,
-      [nom_produit, prix, quantite_stock, id_categorie_produit || null, imageBuffer]
+      `INSERT INTO produit (nom_produit, id_categorie_produit, image, description)
+       VALUES (?, ?, ?, ?)`,
+      [nom_produit,  id_categorie_produit || null, imageBuffer ||null, description]
     );
 
-    const newProductId = result.insertId;
+        const newProductId = result.insertId;
 
+
+        // 2️⃣ Insertion de l'unité de vente
+    const quantiteEnGNum = mode_vente === "gramme" && quantite_en_g !== undefined && quantite_en_g !== ''
+      ? parseInt(quantite_en_g, 10)
+      : null
+
+    const quantiteEnSachetNum = mode_vente === "boite" && quantite_en_sachet !== undefined && quantite_en_sachet !== ''
+      ? parseInt(quantite_en_sachet, 10)
+      : null
+
+    const quantiteStockNum = parseInt(quantite_stock || 0, 10);
+    const prixNum = parseFloat(prix || 0);
+
+    await connection.execute(
+      `INSERT INTO unite_vente
+      (id_produit, quantite_en_g, quantite_en_sachet, quantite_stock, prix)
+      VALUES (?, ?, ?, ?, ?)`,
+      [newProductId, quantiteEnGNum, quantiteEnSachetNum, quantiteStockNum, prixNum]
+    );
+
+    // 3️⃣ Récupération du produit avec catégorie et image
     const [rows] = await connection.execute(
-      `SELECT p.id, p.nom_produit, p.prix, p.quantite_stock, p.id_categorie_produit, c.nom_categorie, p.image
-       FROM produit p
-       LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
-       WHERE p.id = ?`,
-      [newProductId]
-    );
+  `SELECT 
+      p.id, 
+      p.nom_produit, 
+      uv.prix AS prix_produit, 
+      uv.quantite_stock AS stock_produit, 
+      p.id_categorie_produit, 
+      c.nom_categorie, 
+      p.image,
+      uv.id AS id_unite_vente,
+      uv.quantite_en_g,
+      uv.quantite_en_sachet,
+      uv.prix AS prix_unite,
+      uv.quantite_stock AS stock_unite,
+      p.description AS description_unite
+   FROM produit p
+   LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
+   LEFT JOIN unite_vente uv ON uv.id_produit = p.id
+   WHERE p.id = ?`,
+  [newProductId]
+);
+
 
     const newProduct = rows[0];
     newProduct.image = newProduct.image ? Buffer.from(newProduct.image).toString('base64') : null;
@@ -195,10 +283,11 @@ app.post(`${BASE_PATH}/produit`, authorizeRole('admin'), upload.single('image'),
   }
 });
 
+
 // Modifier un produit avec image
 app.put(`${BASE_PATH}/produit/:id`, authorizeRole('admin'), upload.single('image'), async (req, res) => {
   const { id } = req.params;
-  const { nom_produit, prix, quantite_stock, id_categorie_produit } = req.body;
+  const { nom_produit, prix, quantite_stock, id_categorie_produit, mode_vente, quantite_en_g, quantite_en_sachet, description } = req.body;
   const imageBuffer = req.file ? req.file.buffer : null;
 
   let connection;
@@ -207,18 +296,45 @@ app.put(`${BASE_PATH}/produit/:id`, authorizeRole('admin'), upload.single('image
 
     const query = imageBuffer
       ? `UPDATE produit 
-         SET nom_produit = ?, prix = ?, quantite_stock = ?, id_categorie_produit = ?, image = ?
+         SET nom_produit = ?, id_categorie_produit = ?, description = ?, image = ?
          WHERE id = ?`
       : `UPDATE produit 
-         SET nom_produit = ?, prix = ?, quantite_stock = ?, id_categorie_produit = ?
+         SET nom_produit = ?, id_categorie_produit = ?, description = ? 
          WHERE id = ?`;
 
-    const params = imageBuffer
-      ? [nom_produit, prix, quantite_stock, id_categorie_produit, imageBuffer, id]
-      : [nom_produit, prix, quantite_stock, id_categorie_produit, id];
+      const paramsProduit = imageBuffer
+      ? [nom_produit, id_categorie_produit, description, imageBuffer, id]
+      : [nom_produit, id_categorie_produit, description, id];
 
-    const [result] = await connection.execute(query, params);
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Produit non trouvé' });
+    await connection.execute(query, paramsProduit);
+
+    // Récupération de l'unité de vente existante
+const [uvRows] = await connection.execute(
+  "SELECT * FROM unite_vente WHERE id_produit = ?",
+  [id]
+);
+const uv = uvRows[0];
+
+// Préparer les valeurs à mettre à jour
+const quantiteEnGNum = mode_vente === "gramme"
+  ? parseInt(quantite_en_g || uv.quantite_en_g, 10)
+  : uv.quantite_en_g; // si mode boîtes, on garde l'existant
+
+const quantiteEnSachetNum = mode_vente === "boite"
+  ? parseInt(quantite_en_sachet || uv.quantite_en_sachet, 10)
+  : uv.quantite_en_sachet;
+
+const quantiteStockNum = parseInt(quantite_stock || uv.quantite_stock, 10);
+const prixNum = parseFloat(prix || uv.prix);
+
+// Update unite_vente
+await connection.execute(
+  `UPDATE unite_vente
+   SET prix = ?, quantite_stock = ?, quantite_en_g = ?, quantite_en_sachet = ?
+   WHERE id_produit = ?`,
+  [prixNum, quantiteStockNum, quantiteEnGNum, quantiteEnSachetNum, id]
+);
+
 
     res.json({ message: 'Produit mis à jour avec succès' });
   } catch (err) {

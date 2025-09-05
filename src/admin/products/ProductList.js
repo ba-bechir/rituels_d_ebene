@@ -28,7 +28,13 @@ export default function ProductList() {
         ...p,
         id_categorie_produit: p.id_categorie_produit ? Number(p.id_categorie_produit) : null,
         nom_categorie: p.nom_categorie || "",
-      })));
+        prix: p.prix || 0,
+        quantite_stock: p.quantite_stock || 0,
+        quantite_en_g: p.quantite_en_g || 0,
+        quantite_en_sachet: p.quantite_en_sachet || 0,
+        mode_vente: p.quantite_en_g ? 'gramme' : 'boite'
+    })));
+
     } catch (err) {
       console.error(err);
     }
@@ -70,8 +76,7 @@ export default function ProductList() {
         quantite_stock: "", 
         id_categorie_produit: "", 
         mode_vente: "",          // obligatoire pour le RadioGroup
-        poids: "",               // pour le mode gramme
-        quantite_gramme_stock: "" // quantité en grammes
+        quantite_en_g: "" // quantité en grammes
       }
 );
 
@@ -84,6 +89,8 @@ export default function ProductList() {
     setModalProduct((prev) => ({ ...prev, [name]: value }));
   };
 
+  console.log(modalProduct)
+
   const validate = () => {
     const newErrors = {};
     if (!modalProduct.nom_produit?.trim()) newErrors.nom_produit = "Nom requis";
@@ -95,8 +102,8 @@ export default function ProductList() {
 
  if (modalProduct.mode_vente === "gramme") {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
-    if (!modalProduct.poids?.toString().trim()) newErrors.poids = "Poids requis";
-    if (!modalProduct.quantite_gramme_stock?.toString().trim()) newErrors.quantite_gramme_stock = "Quantité en grammes requise";
+    if (!modalProduct.quantite_en_g?.toString().trim()) newErrors.quantite_en_g = "Poids requis";
+    if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité en grammes requise";
 
   } else if (modalProduct.mode_vente === "boite") {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
@@ -111,31 +118,45 @@ export default function ProductList() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleModalSubmit = async () => {
-    if (!validate()) return;
-    const formData = new FormData();
-      formData.append("id_produit", modalProduct.id_produit); 
-      formData.append("nom_produit", modalProduct.nom_produit);
-      formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
-      formData.append("description", modalProduct.description || "");
-      formData.append("quantite_stock", modalProduct.quantite_stock || "");
+const handleModalSubmit = async () => {
+  if (!validate()) return;
+
+  const formData = new FormData();
+  if (modalProduct.id_produit) {
+    formData.append("id_produit", modalProduct.id_produit);
+  }
+
+  formData.append("nom_produit", modalProduct.nom_produit);
+  formData.append("id_categorie_produit", modalProduct.id_categorie_produit);
+  formData.append("description", modalProduct.description || "");
+  formData.append("quantite_stock", modalProduct.quantite_stock || "");
 
   if (modalProduct.mode_vente === "gramme") {
     formData.append("prix", modalProduct.prix);
-    formData.append("poids", modalProduct.poids);
-    formData.append("quantite_en_g", modalProduct.quantite_en_g);
-
+    formData.append("quantite_en_g", modalProduct.quantite_en_g || "");
   } else if (modalProduct.mode_vente === "boite") {
     formData.append("prix", modalProduct.prix);
-    formData.append("quantite_par_boite", modalProduct.quantite_par_boite);
-    formData.append("quantite_en_sachet", modalProduct.quantite_en_sachet);
+    formData.append("quantite_en_sachet", modalProduct.quantite_en_sachet || "");
   }
-    if (modalProduct.image) formData.append("image", modalProduct.image);
 
-    const isEdit = !!modalProduct.id;
-    const url = isEdit ? `${config.apiUrl}/produit/${modalProduct.id}` : `${config.apiUrl}/produit`;
+  formData.append("mode_vente", modalProduct.mode_vente);
+
+  if (modalProduct.image) {
+    formData.append("image", modalProduct.image);
+  }
+
+    const isEdit = !!modalProduct.id_produit;
+    const url = isEdit ? `${config.apiUrl}/produit/${modalProduct.id_produit}` : `${config.apiUrl}/produit`;
 
     try {
+      console.log("Sending:", {
+  prix: modalProduct.prix,
+  quantite_en_g: modalProduct.quantite_en_g,
+  quantite_en_sachet: modalProduct.quantite_en_sachet,
+  quantite_stock: modalProduct.quantite_stock,
+  mode_vente: modalProduct.mode_vente
+});
+
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -246,10 +267,10 @@ export default function ProductList() {
                 type="number"
                 fullWidth
                 margin="dense"
-                value={modalProduct?.poids || ""}
+                value={modalProduct?.quantite_en_g || ""}
                 onChange={handleModalChange}
-                error={!!errors.poids}
-                helperText={errors.poids}
+                error={!!errors.quantite_en_g}
+                helperText={errors.quantite_en_g}
               />
               <TextField
                   label="Quantité de grammes en stock"
@@ -257,10 +278,10 @@ export default function ProductList() {
                   type="number"
                   fullWidth
                   margin="dense"
-                  value={modalProduct?.quantite_gramme_stock || ""}
+                  value={modalProduct?.quantite_stock || ""}
                   onChange={handleModalChange}
-                  error={!!errors.quantite_gramme_stock}
-                  helperText={errors.quantite_gramme_stock}
+                  error={!!errors.quantite_stock}
+                  helperText={errors.quantite_stock}
                 />
                         </>
                       )}
