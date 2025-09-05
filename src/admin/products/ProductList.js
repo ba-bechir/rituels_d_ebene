@@ -61,7 +61,20 @@ export default function ProductList() {
   });
 
   const openEditModal = (product = null) => {
-    setModalProduct(product ? { ...product } : { nom_produit: "", prix: "", quantite_stock: "", id_categorie_produit: "" });
+    setModalProduct(
+  product
+    ? { ...product } // si c’est une édition, tu peux aussi ajouter les champs manquants pour être sûr
+    : { 
+        nom_produit: "", 
+        prix: "", 
+        quantite_stock: "", 
+        id_categorie_produit: "", 
+        mode_vente: "",          // obligatoire pour le RadioGroup
+        poids: "",               // pour le mode gramme
+        quantite_gramme_stock: "" // quantité en grammes
+      }
+);
+
     setErrors({});
     setOpenModal(true);
   };
@@ -77,6 +90,22 @@ export default function ProductList() {
     if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
     if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
     if (!modalProduct.id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
+    if (!modalProduct.nom_produit?.trim()) newErrors.nom_produit = "Nom requis";
+  if (!modalProduct.mode_vente) newErrors.mode_vente = "Mode de vente requis";
+
+ if (modalProduct.mode_vente === "gramme") {
+    if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
+    if (!modalProduct.poids?.toString().trim()) newErrors.poids = "Poids requis";
+    if (!modalProduct.quantite_gramme_stock?.toString().trim()) newErrors.quantite_gramme_stock = "Quantité en grammes requise";
+  } else if (modalProduct.mode_vente === "boite") {
+    if (!modalProduct.prix?.toString().trim()) newErrors.prix = "Prix requis";
+    if (!modalProduct.quantite_par_boite?.toString().trim()) newErrors.quantite_par_boite = "Quantité par boîte requise";
+    if (!modalProduct.quantite_boite_stock?.toString().trim()) newErrors.quantite_boite_stock = "Quantité de boîtes en stock requise";
+  }
+
+  if (!modalProduct.quantite_stock?.toString().trim()) newErrors.quantite_stock = "Quantité requise";
+  if (!modalProduct.id_categorie_produit) newErrors.id_categorie_produit = "Catégorie requise";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -184,7 +213,85 @@ export default function ProductList() {
             {errors.mode_vente && <FormHelperText>{errors.mode_vente}</FormHelperText>}
           </FormControl>
 
-          <TextField label="Quantité en stock" name="quantite_stock" type="number" fullWidth margin="dense" value={modalProduct?.quantite_stock || ""} onChange={handleModalChange} className="number-input" error={!!errors.quantite_stock} helperText={errors.quantite_stock} />
+                    {/* Champs selon mode de vente */}
+          {modalProduct?.mode_vente === "gramme" && (
+            <>
+              <TextField
+                label="Prix (€/gramme)"
+                name="prix"
+                type="number"
+                fullWidth
+                margin="dense"
+                value={modalProduct?.prix || ""}
+                onChange={handleModalChange}
+                error={!!errors.prix}
+                helperText={errors.prix}
+              />
+              <TextField
+                label="Poids en grammes"
+                name="poids"
+                type="number"
+                fullWidth
+                margin="dense"
+                value={modalProduct?.poids || ""}
+                onChange={handleModalChange}
+                error={!!errors.poids}
+                helperText={errors.poids}
+              />
+              <TextField
+                  label="Quantité de grammes en stock"
+                  name="quantite_gramme_stock"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  value={modalProduct?.quantite_gramme_stock || ""}
+                  onChange={handleModalChange}
+                  error={!!errors.quantite_gramme_stock}
+                  helperText={errors.quantite_gramme_stock}
+                />
+                        </>
+                      )}
+
+                      {modalProduct?.mode_vente === "boite" && (
+              <>
+                <TextField
+                  label="Prix (€/boîte)"
+                  name="prix"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  className="conditional-field"
+                  value={modalProduct?.prix || ""}
+                  onChange={handleModalChange}
+                  error={!!errors.prix}
+                  helperText={errors.prix}
+                />
+                <TextField
+                  label="Quantité par boîte"
+                  name="quantite_par_boite"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  className="conditional-field"
+                  value={modalProduct?.quantite_par_boite || ""}
+                  onChange={handleModalChange}
+                  error={!!errors.quantite_par_boite}
+                  helperText={errors.quantite_par_boite}
+                />
+                <TextField
+                  label="Quantité de boîtes en stock"
+                  name="quantite_boite_stock"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  className="conditional-field"
+                  value={modalProduct?.quantite_boite_stock || ""}
+                  onChange={handleModalChange}
+                  error={!!errors.quantite_boite_stock}
+                  helperText={errors.quantite_boite_stock}
+                />
+              </>
+            )}
 
           <TextField select label="Catégorie" name="id_categorie_produit" fullWidth margin="dense" value={modalProduct?.id_categorie_produit || ""} onChange={handleModalChange} error={!!errors.id_categorie_produit} helperText={errors.id_categorie_produit || ""}>
             <MenuItem value="">-- Sélectionner --</MenuItem>
