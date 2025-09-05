@@ -310,7 +310,8 @@ export default function ProductList() {
           rows={filteredProducts}
           columns={columns}
           pageSize={10}
-          autoHeight
+          pagination
+          rowsPerPageOptions={[10, 25, 50]}
         />
       </div>
 
