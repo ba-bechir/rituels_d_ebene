@@ -12,6 +12,7 @@ require("dotenv").config({
   ),
 });
 
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -172,18 +173,12 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
   try {
     connection = await getConnection();
     const [rows] = await connection.execute(
-      `SELECT 
-    p.id,
-    p.nom_produit,
-    uv.prix AS prix_unite,
-    p.image,
-    uv.quantite_en_g,
-    p.description AS description_unite
-FROM produit p
-INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
-INNER JOIN unite_vente uv ON uv.id_produit = p.id
-WHERE c.nom_categorie = ?
-ORDER BY p.nom_produit`,
+      `SELECT p.id, p.nom_produit, uv.prix AS prix_unite, p.image, uv.quantite_en_g, p.description AS description_unite
+       FROM produit p
+       INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
+       INNER JOIN unite_vente uv ON uv.id_produit = p.id
+       WHERE c.nom_categorie = ?
+       ORDER BY p.nom_produit`,
       ["Plantes brutes"]
     );
 
@@ -432,6 +427,6 @@ app.delete(
 // Démarrage du serveur
 // ==============================
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`API démarrée sur http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`API démarrée sur http://${HOST}:${PORT}`);
 });

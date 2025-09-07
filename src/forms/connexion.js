@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/Connexion.css";
 import logo from "../images/logo-rituels_d_ebene.jpg";
+import config from "../config";
 
 const Connexion = () => {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ const Connexion = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3001/login", {
+      const response = await fetch(`${config.apiUrl}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, mdp }),
@@ -91,17 +92,16 @@ const Connexion = () => {
       {message && <p className="connexion-message">{message}</p>}
 
       {/* --- Nouveau bloc "Créer un compte" --- */}
-    <div className="create-account-container">
-      <p className="new-client-text">Nouveau client ?</p>
-      <button
-        className="connexion-button create-account-button"
-        onClick={() => navigate("/register")}
-      >
-        Créer un compte
-      </button>
+      <div className="create-account-container">
+        <p className="new-client-text">Nouveau client ?</p>
+        <button
+          className="connexion-button create-account-button"
+          onClick={() => navigate("/register")}
+        >
+          Créer un compte
+        </button>
+      </div>
     </div>
-  </div>
-   
   );
 };
 
