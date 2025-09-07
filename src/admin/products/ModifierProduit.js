@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import config from '../../config.js';
+import config from "../../config.js";
 
 function ModifierProduit() {
   const { id } = useParams(); // récupère l'id du produit depuis l'URL
@@ -9,6 +9,7 @@ function ModifierProduit() {
     prix: "",
     quantite_stock: "",
     id_categorie: "",
+    description: "",
   });
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
@@ -23,16 +24,19 @@ function ModifierProduit() {
 
     // Récupérer le produit existant
     const fetchProduit = async () => {
+      console.log("fetchProduit appelé");
       try {
         const response = await fetch(`${config.apiUrl}/produit/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
+        console.log(data);
         setProduit({
           nom_produit: data.nom_produit,
           prix: data.prix,
           quantite_stock: data.quantite_stock,
           id_categorie: data.id_categorie,
+          description: data.description,
         });
       } catch (err) {
         console.error(err);
@@ -59,6 +63,7 @@ function ModifierProduit() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(`${name} changé à`, value);
     setProduit({ ...produit, [name]: value });
   };
 
@@ -66,13 +71,22 @@ function ModifierProduit() {
     e.preventDefault();
 
     try {
+      const produitToSend = {
+        nom_produit: produit.nom_produit,
+        prix: produit.prix,
+        quantite_stock: produit.quantite_stock,
+        id_categorie_produit: produit.id_categorie, // clé corrigée pour backend
+        description: produit.description,
+        // Ajoutez ici mode_vente, quantite_en_g, quantite_en_sachet si nécessaire
+      };
+
       const response = await fetch(`${config.apiUrl}/produit/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(produit),
+        body: JSON.stringify(produitToSend),
       });
 
       if (response.ok) {
@@ -145,6 +159,17 @@ function ModifierProduit() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="mb-3">
+          <label>Description</label>
+          <textarea
+            name="description"
+            value={produit.description}
+            onChange={handleChange}
+            className="form-control"
+            required
+          />
         </div>
 
         <button type="submit" className="btn btn-success">

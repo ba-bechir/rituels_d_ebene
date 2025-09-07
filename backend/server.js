@@ -140,7 +140,7 @@ app.get(
       uv.quantite_en_sachet,
       uv.prix AS prix_unite,
       uv.quantite_stock AS quantite_stock,
-      p.description AS description_unite
+      p.description AS description
    FROM produit p
    LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
    LEFT JOIN unite_vente uv ON uv.id_produit = p.id
@@ -173,7 +173,7 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
   try {
     connection = await getConnection();
     const [rows] = await connection.execute(
-      `SELECT p.id, p.nom_produit, uv.prix AS prix_unite, p.image, uv.quantite_en_g, p.description AS description_unite
+      `SELECT p.id, p.nom_produit, uv.prix AS prix_unite, p.image, uv.quantite_en_g, p.description AS description
        FROM produit p
        INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
        INNER JOIN unite_vente uv ON uv.id_produit = p.id
@@ -296,7 +296,7 @@ app.post(
       uv.quantite_en_sachet,
       uv.prix AS prix_unite,
       uv.quantite_stock AS stock_unite,
-      p.description AS description_unite
+      p.description AS description
    FROM produit p
    LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
    LEFT JOIN unite_vente uv ON uv.id_produit = p.id
