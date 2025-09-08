@@ -1,0 +1,44 @@
+.section-container {
+  background: #e3d3cf;
+  border: 2px solid #000;
+  width: 600px;
+  margin: 30px auto 50px;
+  font-family: "Times New Roman", serif;
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid #000;
+  height: 65px;
+  padding: 0 16px;
+  background: #e3d3cf;
+}
+
+.section-row:last-child {
+  border-bottom: none;
+}
+
+.section-arrow {
+  font-size: 38px;
+  font-weight: bold;
+  color: #000;
+  margin-right: 35px;
+  align-self: center;
+}
+
+.section-label {
+  flex: 1;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
+  font-style: italic;
+  letter-spacing: 2px;
+  color: #111;
+}
+
+.section-content {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}

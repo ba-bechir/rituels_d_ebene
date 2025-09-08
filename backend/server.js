@@ -140,7 +140,10 @@ app.get(
       uv.quantite_en_sachet,
       uv.prix AS prix_unite,
       uv.quantite_stock AS quantite_stock,
-      p.description AS description
+      p.description AS description,
+      p.bienfait AS bienfait,
+      p.mode_d_emploi AS mode_d_emploi,
+      p.contre_indication AS contre_indication
    FROM produit p
    LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
    LEFT JOIN unite_vente uv ON uv.id_produit = p.id
@@ -448,6 +451,53 @@ app.delete(
     }
   }
 );
+
+app.get(`${BASE_PATH}/produit/:id`, async (req, res) => {
+  const { id } = req.params;
+  let connection;
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT 
+         p.id, 
+         p.nom_produit, 
+         uv.prix AS prix, 
+         uv.quantite_stock, 
+         p.id_categorie_produit, 
+         c.nom_categorie, 
+         p.image,
+         uv.id AS id_unite_vente,
+         uv.quantite_en_g,
+         uv.quantite_en_sachet,
+         p.description,
+         p.bienfait AS bienfait,
+         p.mode_d_emploi AS mode_d_emploi,
+         p.contre_indication AS contre_indication
+       FROM produit p
+       LEFT JOIN categorie_produit c ON p.id_categorie_produit = c.id
+       LEFT JOIN unite_vente uv ON uv.id_produit = p.id
+       WHERE p.id = ?`,
+      [id]
+    );
+    console.log(rows);
+    await connection.end();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Produit non trouvé" });
+    }
+
+    const product = rows[0];
+    // Si image est un buffer, transformer en base64 pour affichage client
+    product.image = product.image
+      ? Buffer.from(product.image).toString("base64")
+      : null;
+
+    res.json(product);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 // ==============================
 // Démarrage du serveur

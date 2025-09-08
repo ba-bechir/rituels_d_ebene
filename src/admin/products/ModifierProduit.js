@@ -44,6 +44,12 @@ function ModifierProduit() {
           mode_d_emploi: data.mode_d_emploi || "",
           contre_indication: data.contre_indication || "",
         });
+        console.log("Produit set :", {
+          description: data.description,
+          bienfait: data.bienfait,
+          mode_d_emploi: data.mode_d_emploi,
+          contre_indication: data.contre_indication,
+        });
       } catch (err) {
         console.error(err);
         setMessage("Erreur serveur");
@@ -109,7 +115,7 @@ function ModifierProduit() {
       setMessage("Erreur serveur");
     }
   };
-
+  console.log("bienfait dans état:", produit.bienfait);
   return (
     <div>
       <h2>Modifier le produit</h2>
@@ -183,76 +189,22 @@ function ModifierProduit() {
 
         <div className="mb-3">
           <label>Bienfait</label>
-          <Editor
-            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+          <textarea
+            name="bienfait"
             value={produit.bienfait}
-            init={{
-              height: 150,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "lists",
-                "charmap",
-                "anchor",
-                "searchreplace",
-                "visualblocks",
-              ],
-              toolbar:
-                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
-            }}
-            onEditorChange={(content) =>
-              setProduit({ ...produit, bienfait: content })
-            }
+            onChange={handleChange}
+            className="form-control"
           />
         </div>
 
         <div className="mb-3">
           <label>Mode d'emploi</label>
-          <Editor
-            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+          <textarea
+            name="mode_d_emploi"
             value={produit.mode_d_emploi}
-            init={{
-              height: 150,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "lists",
-                "charmap",
-                "anchor",
-                "searchreplace",
-                "visualblocks",
-              ],
-              toolbar:
-                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
-            }}
-            onEditorChange={(content) =>
-              setProduit({ ...produit, mode_d_emploi: content })
-            }
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Contre-indication</label>
-          <Editor
-            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
-            value={produit.contre_indication}
-            init={{
-              height: 150,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "lists",
-                "charmap",
-                "anchor",
-                "searchreplace",
-                "visualblocks",
-              ],
-              toolbar:
-                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
-            }}
-            onEditorChange={(content) =>
-              setProduit({ ...produit, contre_indication: content })
-            }
+            onChange={handleChange}
+            className="form-control"
+            required
           />
         </div>
 

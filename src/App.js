@@ -8,6 +8,7 @@ import ManagePortal from "./components/ManagePortal";
 import AdminRoute from "./admin/AdminRoute.js";
 import ProductList from "./admin/products/ProductList.js";
 import PlantesBrutes from "./boutique/PlantesBrutes.js";
+import PlantesBrutesDetails from "./boutique/PlantesBrutesDetails.js";
 
 function App() {
   const location = useLocation();
@@ -53,6 +54,12 @@ function App() {
         <Route path="/contact" element={<h1>Contact</h1>} />
         <Route path="/compte" element={<Connexion />} />
         <Route path="/panier" element={<h1>Panier</h1>} />
+
+        {/* Détail produit */}
+        <Route
+          path="/boutique/plantes-brutes/produit/:id"
+          element={<PlantesBrutesDetails />}
+        />
 
         {/* Pages admin protégées */}
         <Route

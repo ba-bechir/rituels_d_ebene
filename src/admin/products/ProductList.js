@@ -121,6 +121,7 @@ export default function ProductList() {
             quantite_en_g: "",
             quantite_en_sachet: "",
             description: "",
+            bienfait: "",
             preview: "",
           }
     );
@@ -492,34 +493,6 @@ export default function ProductList() {
             htmlFor="description-editor"
             style={{ display: "block", marginBottom: "4px" }}
           >
-            Bienfaits
-          </label>
-          <Editor
-            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
-            value={modalProduct?.bienfait || ""}
-            onEditorChange={(content) =>
-              setModalProduct((prev) => ({ ...prev, bienfait: content }))
-            }
-            init={{
-              height: 200,
-              menubar: false,
-              plugins: [
-                "advlist",
-                "lists",
-                "charmap",
-                "anchor",
-                "searchreplace",
-                "visualblocks",
-              ],
-              toolbar:
-                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
-            }}
-          />
-
-          <label
-            htmlFor="description-editor"
-            style={{ display: "block", marginBottom: "4px" }}
-          >
             Mode d'emploi
           </label>
           <Editor
@@ -548,7 +521,35 @@ export default function ProductList() {
             htmlFor="description-editor"
             style={{ display: "block", marginBottom: "4px" }}
           >
-            Contre-indications
+            Bienfait
+          </label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={modalProduct?.bienfait || ""}
+            onEditorChange={(content) =>
+              setModalProduct((prev) => ({ ...prev, bienfait: content }))
+            }
+            init={{
+              height: 200,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
+            }}
+          />
+
+          <label
+            htmlFor="description-editor"
+            style={{ display: "block", marginBottom: "4px" }}
+          >
+            Contre-indication
           </label>
           <Editor
             apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import config from "../config.js";
 import "../css/boutique/PlantesBrutes.css"; // importer le fichier CSS
 
@@ -55,8 +56,11 @@ export default function PlantesBrutes() {
                   </div>
                 )}
 
-                {/* Image */}
-                <div className="produit-image-container">
+                {/* Image cliquable vers détail */}
+                <Link
+                  to={`/boutique/plantes-brutes/produit/${produit.id}`}
+                  className="produit-image-container"
+                >
                   <img
                     src={`data:image/jpeg;base64,${produit.image}`}
                     alt={produit.nom_produit}
@@ -65,7 +69,7 @@ export default function PlantesBrutes() {
                       transform: isHovered ? "scale(1.07)" : "scale(1)",
                     }}
                   />
-                </div>
+                </Link>
 
                 {/* Nom du produit sous l'image */}
                 <div className="produit-name">{produit.nom_produit}</div>
