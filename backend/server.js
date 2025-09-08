@@ -211,6 +211,9 @@ app.post(
       quantite_en_g,
       quantite_en_sachet,
       description,
+      bienfait,
+      mode_d_emploi,
+      contre_indication,
     } = req.body;
 
     // Validation côté serveur
@@ -238,13 +241,16 @@ app.post(
 
       // 1️⃣ Insertion du produit
       const [result] = await connection.execute(
-        `INSERT INTO produit (nom_produit, id_categorie_produit, image, description)
-       VALUES (?, ?, ?, ?)`,
+        `INSERT INTO produit (nom_produit, id_categorie_produit, image, description, bienfait, mode_d_emploi, contre_indication)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           nom_produit,
           id_categorie_produit || null,
           imageBuffer || null,
           description,
+          bienfait || null,
+          mode_d_emploi || null,
+          contre_indication || null,
         ]
       );
 
@@ -335,6 +341,9 @@ app.put(
       quantite_en_g,
       quantite_en_sachet,
       description,
+      bienfait,
+      mode_d_emploi,
+      contre_indication,
     } = req.body;
     const imageBuffer = req.file ? req.file.buffer : null;
 
@@ -344,15 +353,32 @@ app.put(
 
       const query = imageBuffer
         ? `UPDATE produit 
-         SET nom_produit = ?, id_categorie_produit = ?, description = ?, image = ?
+         SET nom_produit = ?, id_categorie_produit = ?, description = ?, bienfait = ?, mode_d_emploi = ?, contre_indication = ?, image = ?
          WHERE id = ?`
         : `UPDATE produit 
-         SET nom_produit = ?, id_categorie_produit = ?, description = ? 
+         SET nom_produit = ?, id_categorie_produit = ?, description = ?, bienfait = ?, mode_d_emploi = ?, contre_indication = ? 
          WHERE id = ?`;
 
       const paramsProduit = imageBuffer
-        ? [nom_produit, id_categorie_produit, description, imageBuffer, id]
-        : [nom_produit, id_categorie_produit, description, id];
+        ? [
+            nom_produit,
+            id_categorie_produit,
+            description,
+            imageBuffer,
+            bienfait,
+            mode_d_emploi,
+            contre_indication,
+            id,
+          ]
+        : [
+            nom_produit,
+            id_categorie_produit,
+            description,
+            bienfait,
+            mode_d_emploi,
+            contre_indication,
+            id,
+          ];
 
       await connection.execute(query, paramsProduit);
 
@@ -361,21 +387,21 @@ app.put(
         "SELECT * FROM unite_vente WHERE id_produit = ?",
         [id]
       );
-      const uv = uvRows[0];
+      const uv = uvRows[0] || {};
 
       // Préparer les valeurs à mettre à jour
       const quantiteEnGNum =
         mode_vente === "gramme"
-          ? parseInt(quantite_en_g || uv.quantite_en_g, 10)
-          : uv.quantite_en_g; // si mode boîtes, on garde l'existant
+          ? parseInt(quantite_en_g || uv.quantite_en_g || 0, 10)
+          : uv.quantite_en_g || 0;
 
       const quantiteEnSachetNum =
         mode_vente === "boite"
-          ? parseInt(quantite_en_sachet || uv.quantite_en_sachet, 10)
-          : uv.quantite_en_sachet;
+          ? parseInt(quantite_en_sachet || uv.quantite_en_sachet || 0, 10)
+          : uv.quantite_en_sachet || 0;
 
       const quantiteStockNum = parseInt(
-        quantite_stock || uv.quantite_stock,
+        quantite_stock || uv.quantite_stock || 0,
         10
       );
       const prixNum = parseFloat(prix || uv.prix);

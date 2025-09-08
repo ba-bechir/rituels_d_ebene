@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Editor } from "@tinymce/tinymce-react";
 import { useNavigate } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -164,6 +165,10 @@ export default function ProductList() {
     formData.append("description", modalProduct.description || "");
     formData.append("quantite_stock", modalProduct.quantite_stock || "");
     formData.append("mode_vente", modalProduct.mode_vente);
+    formData.append("bienfait", modalProduct.bienfait || "");
+    formData.append("mode_d_emploi", modalProduct.mode_d_emploi || "");
+    formData.append("contre_indication", modalProduct.contre_indication || "");
+
     formData.append("prix", modalProduct.prix || "");
     if (modalProduct.mode_vente === "gramme")
       formData.append("quantite_en_g", modalProduct.quantite_en_g || "");
@@ -455,15 +460,119 @@ export default function ProductList() {
             ))}
           </TextField>
 
-          <TextField
-            label="Description"
-            name="description"
-            multiline
-            rows={3}
-            fullWidth
-            margin="dense"
+          <label
+            htmlFor="description-editor"
+            style={{ display: "block", marginBottom: "4px" }}
+          >
+            Description
+          </label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
             value={modalProduct?.description || ""}
-            onChange={handleModalChange}
+            onEditorChange={(content) =>
+              setModalProduct((prev) => ({ ...prev, description: content }))
+            }
+            init={{
+              height: 200,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
+            }}
+          />
+
+          <label
+            htmlFor="description-editor"
+            style={{ display: "block", marginBottom: "4px" }}
+          >
+            Bienfaits
+          </label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={modalProduct?.bienfait || ""}
+            onEditorChange={(content) =>
+              setModalProduct((prev) => ({ ...prev, bienfait: content }))
+            }
+            init={{
+              height: 200,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
+            }}
+          />
+
+          <label
+            htmlFor="description-editor"
+            style={{ display: "block", marginBottom: "4px" }}
+          >
+            Mode d'emploi
+          </label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={modalProduct?.mode_d_emploi || ""}
+            onEditorChange={(content) =>
+              setModalProduct((prev) => ({ ...prev, mode_d_emploi: content }))
+            }
+            init={{
+              height: 200,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
+            }}
+          />
+
+          <label
+            htmlFor="description-editor"
+            style={{ display: "block", marginBottom: "4px" }}
+          >
+            Contre-indications
+          </label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={modalProduct?.contre_indication || ""}
+            onEditorChange={(content) =>
+              setModalProduct((prev) => ({
+                ...prev,
+                contre_indication: content,
+              }))
+            }
+            init={{
+              height: 200,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat ",
+            }}
           />
 
           <TextField

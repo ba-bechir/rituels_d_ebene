@@ -10,6 +10,9 @@ function ModifierProduit() {
     quantite_stock: "",
     id_categorie: "",
     description: "",
+    bienfait: "",
+    mode_d_emploi: "",
+    contre_indication: "",
   });
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
@@ -37,6 +40,9 @@ function ModifierProduit() {
           quantite_stock: data.quantite_stock,
           id_categorie: data.id_categorie,
           description: data.description,
+          bienfait: data.bienfait || "",
+          mode_d_emploi: data.mode_d_emploi || "",
+          contre_indication: data.contre_indication || "",
         });
       } catch (err) {
         console.error(err);
@@ -77,6 +83,9 @@ function ModifierProduit() {
         quantite_stock: produit.quantite_stock,
         id_categorie_produit: produit.id_categorie, // clé corrigée pour backend
         description: produit.description,
+        bienfait: produit.bienfait,
+        mode_d_emploi: produit.mode_d_emploi,
+        contre_indication: produit.contre_indication,
         // Ajoutez ici mode_vente, quantite_en_g, quantite_en_sachet si nécessaire
       };
 
@@ -169,6 +178,81 @@ function ModifierProduit() {
             onChange={handleChange}
             className="form-control"
             required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label>Bienfait</label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={produit.bienfait}
+            init={{
+              height: 150,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
+            }}
+            onEditorChange={(content) =>
+              setProduit({ ...produit, bienfait: content })
+            }
+          />
+        </div>
+
+        <div className="mb-3">
+          <label>Mode d'emploi</label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={produit.mode_d_emploi}
+            init={{
+              height: 150,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
+            }}
+            onEditorChange={(content) =>
+              setProduit({ ...produit, mode_d_emploi: content })
+            }
+          />
+        </div>
+
+        <div className="mb-3">
+          <label>Contre-indication</label>
+          <Editor
+            apiKey="5980sbu4qcqa2kud4o26a9rfa2zvbn8iv3ttyv0yo3r7o9jx"
+            value={produit.contre_indication}
+            init={{
+              height: 150,
+              menubar: false,
+              plugins: [
+                "advlist",
+                "lists",
+                "charmap",
+                "anchor",
+                "searchreplace",
+                "visualblocks",
+              ],
+              toolbar:
+                "undo redo | bold italic underline | bullist numlist | link image media | removeformat",
+            }}
+            onEditorChange={(content) =>
+              setProduit({ ...produit, contre_indication: content })
+            }
           />
         </div>
 
