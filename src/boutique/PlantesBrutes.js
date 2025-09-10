@@ -18,7 +18,6 @@ export default function PlantesBrutes() {
           }
         );
         const data = await res.json();
-        console.log("Données reçues /plantes-brutes :", data);
         setProduits(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);

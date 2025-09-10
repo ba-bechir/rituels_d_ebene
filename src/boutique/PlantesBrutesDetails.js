@@ -40,26 +40,41 @@ export default function PlantesBrutesDetails() {
     <div
       style={{
         display: "flex",
-        alignItems: "flex-start", // AJOUTÉ
-        padding: "24px",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        padding: "288px",
+        marginTop: "-150px",
         maxWidth: "100vw",
         width: "100%",
         margin: 0,
         boxSizing: "border-box",
       }}
     >
-      {/* Partie gauche : image + infos */}
-      <div style={{ width: "300px" }}>
-        <h1>{produit.nom_produit}</h1>
-        <img
-          src={produit.image ? `data:image/jpeg;base64,${produit.image}` : ""}
-          alt={produit.nom_produit}
-          style={{
-            maxWidth: "100%",
-            marginBottom: "20px",
-            borderRadius: "8px",
-          }}
-        />
+      {/* Partie gauche encadrée avec fond coul rgb(227, 211, 207) */}
+      <div
+        style={{
+          background: "rgb(227, 211, 207)",
+          border: "2px solid #000",
+          padding: "24px",
+          marginRight: "8px",
+          maxWidth: "320px",
+          boxSizing: "border-box",
+        }}
+      >
+        <center>
+          <h1>{produit.nom_produit}</h1>
+        </center>
+        {produit.image && (
+          <img
+            src={`data:image/jpeg;base64,${produit.image}`}
+            alt={produit.nom_produit}
+            style={{
+              maxWidth: "100%",
+              marginBottom: "20px",
+            }}
+          />
+        )}
+
         <p>
           <strong>Prix :</strong> {produit.prix} €
         </p>
@@ -76,12 +91,14 @@ export default function PlantesBrutesDetails() {
       <div
         style={{
           width: "500px",
-          top: "-10px",
+          alignItems: "flex-start",
+          display: "flex",
+          flexDirection: "column",
           fontFamily: "'Times New Roman', serif",
           background: "#e3d3cf",
           border: "2px solid #000",
-          borderRadius: "8px",
-          marginLeft: "auto",
+          position: "relative",
+          // borderRadius supprimé pour pas d'arrondi
         }}
       >
         <SectionToggle
@@ -137,7 +154,7 @@ function SectionToggle({ title, isOpen, onClick, content }) {
           style={{
             fontSize: "38px",
             fontWeight: "bold",
-            marginRight: "35px",
+            marginRight: "px",
             flexShrink: 0,
           }}
         >
