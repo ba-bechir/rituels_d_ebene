@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import "../css/boutique/PlantesBrutesDetails.css";
 
 export default function PlantesBrutesDetails() {
   const { id } = useParams();
@@ -7,11 +8,14 @@ export default function PlantesBrutesDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // États pour toggle des sections
+  // Sections toggles
   const [openDescriptions, setOpenDescriptions] = useState(false);
   const [openBienfait, setOpenBienfait] = useState(false);
   const [openUsage, setOpenUsage] = useState(false);
   const [openContreIndication, setOpenContreIndication] = useState(false);
+
+  // Quantité choisie
+  const [quantite, setQuantite] = useState(1);
 
   useEffect(() => {
     const fetchProduit = async () => {
@@ -36,93 +40,81 @@ export default function PlantesBrutesDetails() {
   if (error) return <p>Erreur : {error}</p>;
   if (!produit) return <p>Produit non trouvé</p>;
 
+  const total = (quantite * produit.prix).toFixed(2);
+
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        padding: "288px",
-        marginTop: "-150px",
-        maxWidth: "100vw",
-        width: "100%",
-        margin: 0,
-        boxSizing: "border-box",
-      }}
-    >
-      {/* Partie gauche encadrée avec fond coul rgb(227, 211, 207) */}
-      <div
-        style={{
-          background: "rgb(227, 211, 207)",
-          border: "2px solid #000",
-          padding: "24px",
-          marginRight: "8px",
-          maxWidth: "320px",
-          boxSizing: "border-box",
-        }}
-      >
-        <center>
-          <h1>{produit.nom_produit}</h1>
-        </center>
+    <div className="pb-global">
+      {/* Partie gauche : fiche produit */}
+      <div className="pb-left">
+        <h1 className="pb-title">{produit.nom_produit}</h1>
         {produit.image && (
           <img
+            className="pb-image"
             src={`data:image/jpeg;base64,${produit.image}`}
             alt={produit.nom_produit}
-            style={{
-              maxWidth: "100%",
-              marginBottom: "20px",
-            }}
           />
         )}
 
-        <p>
-          <strong>Prix :</strong> {produit.prix} €
+        <p className="pb-pricing">
+          <strong>
+            {produit.prix} € /{" "}
+            {produit.quantite_en_g ? `${produit.quantite_en_g} g` : ""}
+          </strong>
         </p>
-        <p>
-          <strong>Quantité en stock :</strong> {produit.quantite_stock}
-        </p>
-        <p>
-          <strong>Unité de vente :</strong>{" "}
-          {produit.quantite_en_g ? `${produit.quantite_en_g} g` : ""}
-        </p>
+
+        <div className="pb-cta-row">
+          <div className="pb-qty-selector">
+            <button
+              type="button"
+              className="pb-qty-btn"
+              onClick={() => setQuantite((q) => Math.max(1, q - 1))}
+              aria-label="Diminuer la quantité"
+            >
+              -
+            </button>
+            <span className="pb-qty-value">{quantite}</span>
+            <button
+              type="button"
+              className="pb-qty-btn"
+              onClick={() => setQuantite((q) => q + 1)}
+              aria-label="Augmenter la quantité"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <button
+          className="pb-add-to-cart"
+          // Ajoute ici ta logique d'ajout au panier
+        >
+          AJOUTER AU PANIER €{total}
+        </button>
       </div>
 
       {/* Partie droite : sections dépliables */}
-      <div
-        style={{
-          width: "500px",
-          alignItems: "flex-start",
-          display: "flex",
-          flexDirection: "column",
-          fontFamily: "'Times New Roman', serif",
-          background: "#e3d3cf",
-          border: "2px solid #000",
-          position: "relative",
-          // borderRadius supprimé pour pas d'arrondi
-        }}
-      >
+      <div className="pb-right">
         <SectionToggle
           title="DESCRIPTIONS"
           isOpen={openDescriptions}
-          onClick={() => setOpenDescriptions(!openDescriptions)}
+          onClick={() => setOpenDescriptions((open) => !open)}
           content={produit.description}
         />
         <SectionToggle
           title="BIENFAIT"
           isOpen={openBienfait}
-          onClick={() => setOpenBienfait(!openBienfait)}
+          onClick={() => setOpenBienfait((open) => !open)}
           content={produit.bienfait}
         />
         <SectionToggle
           title="MODE D'EMPLOI"
           isOpen={openUsage}
-          onClick={() => setOpenUsage(!openUsage)}
+          onClick={() => setOpenUsage((open) => !open)}
           content={produit.mode_d_emploi}
         />
         <SectionToggle
           title="CONTRE-INDICATIONS"
           isOpen={openContreIndication}
-          onClick={() => setOpenContreIndication(!openContreIndication)}
+          onClick={() => setOpenContreIndication((open) => !open)}
           content={produit.contre_indication}
         />
       </div>
@@ -130,63 +122,18 @@ export default function PlantesBrutesDetails() {
   );
 }
 
-// Composant pour section avec toggle
 function SectionToggle({ title, isOpen, onClick, content }) {
   const isContentPresent = content && content.trim() !== "";
 
   return (
     <>
-      <div
-        onClick={onClick}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          height: "65px",
-          borderBottom: "2px solid #000",
-          padding: "0 16px",
-          background: "#e3d3cf",
-          userSelect: "none",
-          width: "100%",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "38px",
-            fontWeight: "bold",
-            marginRight: "px",
-            flexShrink: 0,
-          }}
-        >
-          &gt;
-        </span>
-        <span
-          style={{
-            flex: 1,
-            textAlign: "center",
-            fontSize: "30px",
-            fontWeight: "bold",
-            fontStyle: "italic",
-            letterSpacing: "2px",
-            color: "#111",
-          }}
-        >
-          {title}
-        </span>
+      <div className="pb-section-header" onClick={onClick}>
+        <span className="pb-section-arrow">&gt;</span>
+        <span className="pb-section-title">{title}</span>
       </div>
       {isOpen && isContentPresent && (
         <div
-          style={{
-            padding: "20px 40px",
-            background: "#f7f1f0",
-            fontSize: "16px",
-            lineHeight: 1.5,
-            color: "#333",
-            borderBottom: "2px solid #000",
-            whiteSpace: "pre-wrap",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
+          className="pb-section-content"
           dangerouslySetInnerHTML={{ __html: content }}
         />
       )}
