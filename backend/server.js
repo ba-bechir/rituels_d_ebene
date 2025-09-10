@@ -191,6 +191,62 @@ app.get(`${BASE_PATH}/plantes-brutes`, async (req, res) => {
   }
 });
 
+app.get(`${BASE_PATH}/tisanes`, async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT p.id, p.nom_produit, uv.prix AS prix, p.image, uv.quantite_en_g, p.description AS description
+       FROM produit p
+       INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
+       INNER JOIN unite_vente uv ON uv.id_produit = p.id
+       WHERE c.nom_categorie = ?
+       ORDER BY p.nom_produit`,
+      ["Tisanes (sachet)"]
+    );
+
+    const productsWithImages = rows.map((p) => ({
+      ...p,
+      image: p.image ? Buffer.from(p.image).toString("base64") : null,
+    }));
+
+    res.json(productsWithImages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.get(`${BASE_PATH}/poudres`, async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT p.id, p.nom_produit, uv.prix AS prix, p.image, uv.quantite_en_g, p.description AS description
+       FROM produit p
+       INNER JOIN categorie_produit c ON p.id_categorie_produit = c.id
+       INNER JOIN unite_vente uv ON uv.id_produit = p.id
+       WHERE c.nom_categorie = ?
+       ORDER BY p.nom_produit`,
+      ["Poudres"]
+    );
+
+    const productsWithImages = rows.map((p) => ({
+      ...p,
+      image: p.image ? Buffer.from(p.image).toString("base64") : null,
+    }));
+
+    res.json(productsWithImages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
 // ------ Ajouter produit ------
 app.post(
   `${BASE_PATH}/produit`,

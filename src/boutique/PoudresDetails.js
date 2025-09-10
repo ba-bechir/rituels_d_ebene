@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../css/boutique/ProductDetails.module.css";
 
-export default function PlantesBrutesDetails() {
+export default function TisanesDetails() {
   const { id } = useParams();
   const [produit, setProduit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,11 @@ export default function PlantesBrutesDetails() {
         <p className={styles["pb-pricing"]}>
           <strong>
             {produit.prix} € /{" "}
-            {produit.quantite_en_g ? `${produit.quantite_en_g} g` : ""}
+            {produit.quantite_en_g
+              ? `${produit.quantite_en_g} g`
+              : produit.quantite_en_sachet
+              ? `boite de ${produit.quantite_en_sachet} sachets`
+              : ""}
           </strong>
         </p>
 

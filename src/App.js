@@ -9,6 +9,10 @@ import AdminRoute from "./admin/AdminRoute.js";
 import ProductList from "./admin/products/ProductList.js";
 import PlantesBrutes from "./boutique/PlantesBrutes.js";
 import PlantesBrutesDetails from "./boutique/PlantesBrutesDetails.js";
+import Tisanes from "./boutique/Tisanes.js";
+import TisanesDetails from "./boutique/TisanesDetails.js";
+import Poudres from "./boutique/Poudres.js";
+import PoudresDetails from "./boutique/PoudresDetails.js";
 
 function App() {
   const location = useLocation();
@@ -33,8 +37,8 @@ function App() {
         <Route path="/" element={<h1>Bientôt</h1>} />
         <Route path="/boutique" element={<h1>Boutique</h1>} />
         <Route path="/boutique/plantes-brutes" element={<PlantesBrutes />} />
-        <Route path="/boutique/tisanes" element={<h1>Tisanes</h1>} />
-        <Route path="/boutique/poudres" element={<h1>Poudres</h1>} />
+        <Route path="/boutique/tisanes" element={<Tisanes />} />
+        <Route path="/boutique/poudres" element={<Poudres />} />
         <Route
           path="/ebooks/plantes-bienfaits"
           element={<h1>Plantes bienfaits</h1>}
@@ -59,6 +63,14 @@ function App() {
         <Route
           path="/boutique/plantes-brutes/produit/:id"
           element={<PlantesBrutesDetails />}
+        />
+        <Route
+          path="/boutique/tisanes/produit/:id"
+          element={<TisanesDetails />}
+        />
+        <Route
+          path="/boutique/poudres/produit/:id"
+          element={<PoudresDetails />}
         />
 
         {/* Pages admin protégées */}

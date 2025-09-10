@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "../css/boutique/Product.module.css";
 
-export default function PlantesBrutes() {
+export default function Tisanes() {
   const [produits, setProduits] = useState([]);
   const [hoveredId, setHoveredId] = useState(null);
   const token = localStorage.getItem("token");
@@ -10,14 +10,10 @@ export default function PlantesBrutes() {
   useEffect(() => {
     const fetchProduits = async () => {
       try {
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL}/plantes-brutes`,
-          {
-            // headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/tisanes`, {
+          // headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
-        console.log("Données reçues /plantes-brutes :", data);
         setProduits(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
@@ -32,30 +28,35 @@ export default function PlantesBrutes() {
         {Array.isArray(produits) &&
           produits.map((produit) => {
             const isHovered = hoveredId === produit.id;
-
             return (
               <div
                 key={produit.id}
-                className={`${styles["produit-card"]} ${
-                  isHovered ? styles.hovered : styles["not-hovered"]
-                }`}
+                className={
+                  styles["produit-card"] +
+                  " " +
+                  (isHovered ? styles["hovered"] : styles["not-hovered"])
+                }
                 onMouseEnter={() => setHoveredId(produit.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
+                {/* Badge */}
                 {produit.badge && (
                   <div
-                    className={`${styles["produit-badge"]} ${
-                      produit.badge === "NEW"
+                    className={
+                      styles["produit-badge"] +
+                      " " +
+                      (produit.badge === "NEW"
                         ? styles["produit-badge-new"]
-                        : styles["produit-badge-other"]
-                    }`}
+                        : styles["produit-badge-other"])
+                    }
                   >
                     {produit.badge}
                   </div>
                 )}
 
+                {/* Image cliquable vers détail */}
                 <Link
-                  to={`/boutique/plantes-brutes/produit/${produit.id}`}
+                  to={`/boutique/tisanes/produit/${produit.id}`}
                   className={styles["produit-image-container"]}
                 >
                   <img
@@ -68,6 +69,7 @@ export default function PlantesBrutes() {
                   />
                 </Link>
 
+                {/* Nom du produit sous l'image */}
                 <div className={styles["produit-name"]}>
                   {produit.nom_produit}
                 </div>
@@ -99,11 +101,13 @@ export default function PlantesBrutes() {
                       ))}
                     </select>
                     <button
-                      className={`${styles["button-ajouter"]} ${
-                        isHovered
+                      className={
+                        styles["button-ajouter"] +
+                        " " +
+                        (isHovered
                           ? styles["button-hovered"]
-                          : styles["button-not-hovered"]
-                      }`}
+                          : styles["button-not-hovered"])
+                      }
                     >
                       Ajouter au panier
                     </button>

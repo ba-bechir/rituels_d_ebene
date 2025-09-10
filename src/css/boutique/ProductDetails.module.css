@@ -1,0 +1,198 @@
+.pb-global {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+  background: #d4ad7d;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* Bloc de gauche : rectangulaire, espacé du bloc droit */
+.pb-left {
+  flex: 0 0 305px;
+  max-width: 325px;
+  background: rgb(227, 211, 207);
+  border: 2px solid #000;
+  border-radius: 0; /* PAS d'arrondi */
+  box-sizing: border-box;
+  padding: 18px 16px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 60px;
+  margin-bottom: 40px;
+  margin-right: 48px; /* ESPACEMENT bloc droit */
+}
+
+.pb-title {
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.pb-image {
+  width: 95%;
+  margin-bottom: 18px;
+  border-radius: 0; /* image rectangulaire */
+}
+
+.pb-pricing {
+  margin: 10px 0 8px 0;
+  font-size: 1rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.pb-cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* Sélecteur quantité : compact, rectangulaire, bien séparé */
+.pb-qty-selector {
+  display: flex;
+  align-items: center;
+  border: 1.2px solid #333;
+  border-radius: 0; /* PAS d’arrondi */
+  background: #f7f1ef;
+  width: 90px;
+  height: 32px;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+}
+
+.pb-qty-btn {
+  border: none;
+  background: #dfc9a9;
+  font-size: 18px;
+  width: 28px;
+  height: 100%;
+  cursor: pointer;
+  border-radius: 0; /* Pas d’arrondi */
+  font-weight: bold;
+  color: #333;
+  transition: background 0.15s;
+}
+.pb-qty-btn:hover {
+  background: #cfae5d;
+}
+
+.pb-qty-value {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* Bouton Ajouter rectangulaire, pro, bien visible */
+.pb-add-to-cart {
+  background: #48c195;
+  color: #fff;
+  border: 2px solid #255e45;
+  border-radius: 0; /* RECTANGULAIRE */
+  font-weight: 700;
+  font-size: 15px;
+  padding: 8px 0;
+  width: 100%;
+  margin-bottom: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 6px rgba(80, 100, 90, 0.08);
+  transition: background 0.18s, border 0.15s;
+}
+.pb-add-to-cart:hover {
+  background: #289e77;
+  border-color: #1d3e32;
+}
+
+/* Bloc de droite, rectangulaire */
+.pb-right {
+  flex: 1 1 0;
+  min-width: 350px;
+  max-width: 1080px;
+  margin-top: 60px;
+  margin-bottom: 40px;
+  background: #e3d3cf;
+  border: 2px solid #000;
+  border-radius: 0; /* PAS d’arrondi */
+  box-sizing: border-box;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Sections dépliables : rectangles */
+.pb-section-header {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  background: #e3d3cf;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 2px solid #000;
+  padding: 0 18px;
+  user-select: none;
+  width: 100%;
+  transition: background 0.15s;
+}
+.pb-section-header:hover {
+  background: #ebdfdb;
+}
+.pb-section-arrow {
+  font-size: 32px;
+  font-weight: bold;
+  margin-right: 9px;
+}
+.pb-section-title {
+  flex: 1;
+  text-align: center;
+  font-size: 23px;
+  font-weight: bold;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  color: #111;
+}
+.pb-section-content {
+  padding: 18px 28px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333;
+  border-bottom: 2px solid #000;
+  background: #f7f1f0;
+  border-radius: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .pb-global {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pb-left,
+  .pb-right {
+    margin-left: auto;
+    margin-right: auto;
+    width: 98vw;
+    max-width: 99vw;
+  }
+  .pb-left {
+    margin-top: 25px;
+    margin-bottom: 0;
+  }
+  .pb-right {
+    margin-top: 20px;
+    margin-bottom: 25px;
+  }
+}
