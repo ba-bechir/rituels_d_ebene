@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "../css/InscriptionForm.module.css";
 import config from "../config";
+import { useNavigate } from "react-router-dom";
 
 function isPasswordValid(pw) {
   return (
@@ -23,6 +24,7 @@ export default function InscriptionForm() {
   });
   const [errorFields, setErrorFields] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const countries = [
     "Afghanistan",
@@ -229,6 +231,16 @@ export default function InscriptionForm() {
     setErrorFields({ ...errorFields, [e.target.name]: "" });
   }
 
+  useEffect(() => {
+    if (submitted) {
+      const timer = setTimeout(() => {
+        navigate("/");
+      }, 3000); // redirige après 3 secondes
+
+      return () => clearTimeout(timer);
+    }
+  }, [submitted, navigate]);
+
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -270,7 +282,6 @@ export default function InscriptionForm() {
     setErrorFields(errors);
 
     if (valid) {
-      setSubmitted(false);
       try {
         const response = await fetch(`${config.apiUrl}/register`, {
           method: "POST",
@@ -285,7 +296,7 @@ export default function InscriptionForm() {
         });
         if (response.ok) {
           setSubmitted(true);
-          // éventuellement, reset formulaire ici
+          // optionnel: reset formulaire ici
         } else {
           const data = await response.json();
           alert(`Erreur serveur : ${data.error || "inconnue"}`);
@@ -409,7 +420,21 @@ export default function InscriptionForm() {
       </div>
 
       <button className={styles.submitBtn}>Créer le compte</button>
-      {submitted && <div className={styles.success}>Formulaire envoyé !</div>}
+
+      {submitted && (
+        <div className={styles.popupOverlay}>
+          <div className={styles.popup}>
+            <h3>Compte créé</h3>
+            <p>Vous allez recevoir un e-mail pour confirmer votre compte.</p>
+            <button
+              className={styles.closePopupBtn}
+              onClick={() => setSubmitted(false)}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
