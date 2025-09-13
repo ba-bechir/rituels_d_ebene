@@ -13,11 +13,12 @@ import Tisanes from "./boutique/Tisanes.js";
 import TisanesDetails from "./boutique/TisanesDetails.js";
 import Poudres from "./boutique/Poudres.js";
 import PoudresDetails from "./boutique/PoudresDetails.js";
+import Inscription from "./forms/Inscription.js";
 
 function App() {
   const location = useLocation();
 
-  // Chemins pour navbar admin et navbar classique
+  // Chemins pour navbar admin et navbar classiques
   const adminNavbarPaths = [
     "/manage-portal",
     "/liste-produits",
@@ -57,6 +58,7 @@ function App() {
         />
         <Route path="/contact" element={<h1>Contact</h1>} />
         <Route path="/compte" element={<Connexion />} />
+        <Route path="/register" element={<Inscription />} />
         <Route path="/panier" element={<h1>Panier</h1>} />
 
         {/* Détail produit */}

@@ -1,0 +1,70 @@
+.formBox {
+  background: #f7f7f7;
+  border: 1.5px solid #e0e0e0;
+  padding: 20px 32px 22px 32px;
+  max-width: 500px;
+  margin: 20px auto;
+  border-radius: 8px;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+h2 {
+  margin-top: 3px;
+}
+.info {
+  color: #745c3b;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.fieldBlock {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.labelReq {
+  font-size: 15px;
+  font-weight: bold;
+  color: #b4845e;
+  margin-bottom: 4px;
+}
+.inputField {
+  padding: 8px 9px;
+  font-size: 15px;
+  border: 1.5px solid #cccccc;
+  border-radius: 4px;
+}
+.inputError {
+  border: 1.5px solid #b5002c;
+}
+.error {
+  color: #b5002c;
+  font-size: 14px;
+  margin-top: 3px;
+  font-family: inherit;
+}
+.passwordInfo {
+  color: #6c6c6c;
+  font-size: 13px;
+  margin-top: 5px;
+}
+.submitBtn {
+  padding: 12px 24px; /* 12px en haut et bas, 24px à gauche et droite */
+  font-size: 17px;
+  width: auto;
+  min-width: 120px;
+  border: 1px solid #6d3e13; /* bordure fine et douce */
+  border-radius: 6px;
+  background: #b4845e;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.17s, border 0.15s;
+}
+.submitBtn:hover {
+  background: #8d663f;
+}
+.success {
+  margin-top: 15px;
+  color: #268b46;
+  font-weight: bold;
+  font-size: 16px;
+}
