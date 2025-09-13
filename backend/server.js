@@ -109,8 +109,8 @@ app.post("/register", async (req, res) => {
 
     // Insérer dans la base avec role 'client' par défaut
     await connection.execute(
-      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role) VALUES (?, ?, ?, ?, ?, ?)`,
-      [nom, prenom, pays, email, hashedPassword, "client"]
+      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role, confirm) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [nom, prenom, pays, email, hashedPassword, "client", 0]
     );
     await connection.end();
     res.status(201).json({ message: "Compte créé avec succès" });
