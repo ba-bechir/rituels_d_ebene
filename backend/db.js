@@ -1,14 +1,20 @@
-const path = require('path');
-const mysql = require('mysql2/promise');
+import path from "path";
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 
-const envFile = process.env.NODE_ENV === 'production' 
-  ? '.env.production' 
-  : '.env.development';
+// Définir __dirname en ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const envPath = path.join(__dirname, '..', envFile);
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.development";
 
-require('dotenv').config({ path: envPath });
+const envPath = path.join(__dirname, "..", envFile);
 
+dotenv.config({ path: envPath });
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -17,8 +23,6 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-async function getConnection() {
+export async function getConnection() {
   return await mysql.createConnection(dbConfig);
 }
-
-module.exports = { getConnection };

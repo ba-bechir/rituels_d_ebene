@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import styles from "../css/InscriptionForm.module.css";
-import config from "../config";
+import config from "../config.js";
 import { useNavigate } from "react-router-dom";
 
 function isPasswordValid(pw) {
@@ -283,6 +283,7 @@ export default function InscriptionForm() {
 
     if (valid) {
       try {
+        console.log(`${config.apiUrl}/register`);
         const response = await fetch(`${config.apiUrl}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

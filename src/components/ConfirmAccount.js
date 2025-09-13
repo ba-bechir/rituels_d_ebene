@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import config from "../config";
+import config from "../config.js";
 
 export default function ConfirmAccount() {
   const { token } = useParams();

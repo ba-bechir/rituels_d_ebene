@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/Connexion.css";
 import logo from "../images/logo-rituels_d_ebene.jpg";
-import config from "../config";
+import config from "../config.js";
 
 const Connexion = () => {
   const [email, setEmail] = useState("");

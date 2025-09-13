@@ -1,10 +1,10 @@
 import "./App.css";
-import Navbar from "./components/Navbar";
-import AdminNavbar from "./components/AdminNavbar";
-import Footer from "./components/Footer";
+import Navbar from "./components/Navbar.js";
+import AdminNavbar from "./components/AdminNavbar.js";
+import Footer from "./components/Footer.js";
 import { Routes, Route, useLocation } from "react-router-dom";
-import Connexion from "./forms/connexion";
-import ManagePortal from "./components/ManagePortal";
+import Connexion from "./forms/connexion.js";
+import ManagePortal from "./components/ManagePortal.js";
 import AdminRoute from "./admin/AdminRoute.js";
 import ProductList from "./admin/products/ProductList.js";
 import PlantesBrutes from "./boutique/PlantesBrutes.js";

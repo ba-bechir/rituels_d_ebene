@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import multer from "multer";
 import { getConnection } from "./db.js";
-import config from "../src/config.js";
+import config from "./config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -1,12 +1,22 @@
-// backend/config.js
-const envFile = process.env.NODE_ENV === 'production'
-  ? '.env.production'
-  : '.env.development';
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-require('dotenv').config({ path: `${__dirname}/${envFile}` });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-module.exports = {
-  PORT: process.env.PORT || 3001,
-  SECRET_JWT: process.env.SECRET_JWT,
-  DB_URL: process.env.DB_URL,
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.development";
+
+const config = {
+  apiUrl: process.env.REACT_APP_API_URL || "http://localhost:3001",
+  env: process.env.REACT_APP_ENV,
+  siteName: process.env.REACT_APP_SITE_NAME,
+  //analyticsId: process.env.REACT_APP_GOOGLE_ANALYTICS_ID
 };
+
+dotenv.config({ path: `${__dirname}/${envFile}` });
+
+export default config;
