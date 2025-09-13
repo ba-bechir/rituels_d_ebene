@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "../css/InscriptionForm.module.css";
+import config from "../config";
 
 function isPasswordValid(pw) {
   return (
@@ -15,13 +16,14 @@ export default function InscriptionForm() {
   const [form, setForm] = useState({
     prenom: "",
     nom: "",
-    pays: "France",
+    pays: "",
     email: "",
     password: "",
     confirm: "",
   });
   const [errorFields, setErrorFields] = useState({});
   const [submitted, setSubmitted] = useState(false);
+
   const countries = [
     "Afghanistan",
     "Afrique du Sud",
@@ -227,8 +229,9 @@ export default function InscriptionForm() {
     setErrorFields({ ...errorFields, [e.target.name]: "" });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+
     let errors = {};
     let valid = true;
 
@@ -253,7 +256,7 @@ export default function InscriptionForm() {
       valid = false;
     } else if (!isPasswordValid(form.password)) {
       errors.password =
-        "Le mot de passe doit contenir au moins 8 caractères, 1 minuscule, 1 majuscule, 1 chiffre et un caractère alphanumérique.";
+        "Le mot de passe doit contenir au moins 8 caractères, 1 minuscule, 1 majuscule, 1 chiffre et 1 caractère alphanumérique.";
       valid = false;
     }
     if (!form.confirm) {
@@ -266,13 +269,39 @@ export default function InscriptionForm() {
 
     setErrorFields(errors);
 
-    if (valid) setSubmitted(true);
+    if (valid) {
+      setSubmitted(false);
+      try {
+        const response = await fetch(`${config.apiUrl}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nom: form.nom,
+            prenom: form.prenom,
+            pays: form.pays,
+            email: form.email,
+            password: form.password,
+          }),
+        });
+        if (response.ok) {
+          setSubmitted(true);
+          // éventuellement, reset formulaire ici
+        } else {
+          const data = await response.json();
+          alert(`Erreur serveur : ${data.error || "inconnue"}`);
+        }
+      } catch (err) {
+        alert("Erreur réseau, réessaye plus tard");
+        console.error(err);
+      }
+    }
   }
 
   return (
-    <form className={styles.formBox} onSubmit={handleSubmit}>
+    <form className={styles.formBox} onSubmit={handleSubmit} noValidate>
       <h2>Créer un compte</h2>
       <div className={styles.info}>* Champs requis</div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* Prénom</label>
         <input
@@ -288,6 +317,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.prenom}</div>
         )}
       </div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* Nom</label>
         <input
@@ -303,6 +333,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.nom}</div>
         )}
       </div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* Pays</label>
         <select
@@ -315,7 +346,7 @@ export default function InscriptionForm() {
         >
           <option value="">-- Choisir un pays --</option>
           {countries.map((country) => (
-            <option value={country} key={country}>
+            <option key={country} value={country}>
               {country}
             </option>
           ))}
@@ -324,6 +355,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.pays}</div>
         )}
       </div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* E-mail</label>
         <input
@@ -339,6 +371,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.email}</div>
         )}
       </div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* Mot de passe</label>
         <input
@@ -358,6 +391,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.password}</div>
         )}
       </div>
+
       <div className={styles.fieldBlock}>
         <label className={styles.labelReq}>* Confirmer le mot de passe</label>
         <input
@@ -373,6 +407,7 @@ export default function InscriptionForm() {
           <div className={styles.error}>{errorFields.confirm}</div>
         )}
       </div>
+
       <button className={styles.submitBtn}>Créer le compte</button>
       {submitted && <div className={styles.success}>Formulaire envoyé !</div>}
     </form>

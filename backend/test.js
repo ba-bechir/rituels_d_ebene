@@ -1,24 +1,27 @@
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
+import { getConnection } from "./db.js";
+import bcrypt from "bcrypt";
 
-async function createUser() {
-  const connection = await mysql.createConnection({
-    host: 'localhost',
-    user: 'bechir',
-    password: 'azerty',
-    database: 'rituels_d_ebene',
-  });
-
-  const password = 'azerty';
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await connection.execute(
-    'INSERT INTO utilisateur (email, mdp) VALUES (?, ?)',
-    ['a@gmail.com', hashedPassword]
-  );
-
-  await connection.end();
-  console.log('Utilisateur créé avec mot de passe hashé.');
+async function testInsert() {
+  const connection = await getConnection();
+  const hashedPassword = await bcrypt.hash("Test1234!", 10);
+  try {
+    await connection.execute(
+      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        "Dupont",
+        "Jean",
+        "France",
+        "jean.dupont@mail.com",
+        hashedPassword,
+        "client",
+      ]
+    );
+    console.log("Insertion OK");
+  } catch (error) {
+    console.error("Erreur insertion :", error);
+  } finally {
+    await connection.end();
+  }
 }
 
-createUser();
+testInsert();

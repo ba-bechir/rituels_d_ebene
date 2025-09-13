@@ -84,6 +84,42 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
   }
 });
 
+app.post("/register", async (req, res) => {
+  const { nom, prenom, pays, email, password } = req.body;
+  if (!nom || !prenom || !pays || !email || !password) {
+    return res.status(400).json({ error: "Tous les champs sont requis" });
+  }
+
+  try {
+    const connection = await getConnection();
+
+    // Vérifier si l’email existe déjà
+    const [existing] = await connection.execute(
+      "SELECT id FROM utilisateur WHERE email = ?",
+      [email]
+    );
+    if (existing.length > 0) {
+      await connection.end();
+      return res.status(409).json({ error: "Email déjà utilisé" });
+    }
+
+    // Hasher le mot de passe
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insérer dans la base avec role 'client' par défaut
+    await connection.execute(
+      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role) VALUES (?, ?, ?, ?, ?, ?)`,
+      [nom, prenom, pays, email, hashedPassword, "client"]
+    );
+    await connection.end();
+    res.status(201).json({ message: "Compte créé avec succès" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // ------ Catégories ------
 app.get(`${BASE_PATH}/categories`, authorizeRole("admin"), async (req, res) => {
   let connection;
