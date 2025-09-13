@@ -1,5 +1,32 @@
-const path = require("path");
-require("dotenv").config({
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import express from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+import multer from "multer";
+import { getConnection } from "./db.js";
+import config from "../src/config.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // utile dans certains cas pour TLS
+  },
+});
+
+dotenv.config({
   path: path.join(
     __dirname,
     "..",
@@ -10,12 +37,6 @@ require("dotenv").config({
 });
 
 const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const cors = require("cors");
-const multer = require("multer");
-const { getConnection } = require("./db");
 
 const app = express();
 
@@ -30,6 +51,61 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fieldSize: 10 * 1024 * 1024, fileSize: 5 * 1024 * 1024 },
+});
+
+async function sendConfirmationEmail(email, token) {
+  const url = `${config.apiUrl}/confirm/${token}`; // adapte l’URL
+
+  const mailOptions = {
+    from: '"Rituels" <contact@rituelsdebene.com>',
+    to: email,
+    subject: "Confirmez votre compte",
+    html: `
+      <p>Merci pour votre inscription. Cliquez sur ce lien pour confirmer votre compte :</p>
+      <a href="${url}">${url}</a>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
+app.get("/confirm/:token", async (req, res) => {
+  const { token } = req.params;
+
+  if (!token) {
+    return res.status(400).send("Token manquant.");
+  }
+
+  try {
+    const connection = await getConnection();
+
+    // Chercher utilisateur avec ce token
+    const [rows] = await connection.execute(
+      "SELECT id FROM utilisateur WHERE confirmation_token = ? AND confirm = 0",
+      [token]
+    );
+
+    if (rows.length === 0) {
+      await connection.end();
+      return res.status(400).send("Token invalide ou compte déjà confirmé.");
+    }
+
+    const userId = rows[0].id;
+
+    // Mettre à jour compte : confirmé et suppression token
+    await connection.execute(
+      "UPDATE utilisateur SET confirm = 1, confirmation_token = NULL WHERE id = ?",
+      [userId]
+    );
+    await connection.end();
+
+    res.send(
+      "Votre compte a été confirmé avec succès. Vous pouvez maintenant vous connecter."
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erreur serveur.");
+  }
 });
 
 // -------------- Middleware rôle --------------
@@ -85,7 +161,9 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
 });
 
 app.post("/register", async (req, res) => {
+  const confirmationToken = crypto.randomBytes(32).toString("hex");
   const { nom, prenom, pays, email, password } = req.body;
+
   if (!nom || !prenom || !pays || !email || !password) {
     return res.status(400).json({ error: "Tous les champs sont requis" });
   }
@@ -93,7 +171,7 @@ app.post("/register", async (req, res) => {
   try {
     const connection = await getConnection();
 
-    // Vérifier si l’email existe déjà
+    // Vérifier si email existe déjà
     const [existing] = await connection.execute(
       "SELECT id FROM utilisateur WHERE email = ?",
       [email]
@@ -107,13 +185,20 @@ app.post("/register", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Insérer dans la base avec role 'client' par défaut
+    // Insérer utilisateur avec token de confirmation et confirm=0
     await connection.execute(
-      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role, confirm) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [nom, prenom, pays, email, hashedPassword, "client", 0]
+      `INSERT INTO utilisateur (nom, prenom, pays, email, mdp, role, confirm, confirmation_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nom, prenom, pays, email, hashedPassword, "client", 0, confirmationToken]
     );
+
     await connection.end();
-    res.status(201).json({ message: "Compte créé avec succès" });
+
+    // Envoyer e-mail de confirmation (async, indépendant)
+    await sendConfirmationEmail(email, confirmationToken);
+
+    res
+      .status(201)
+      .json({ message: "Compte créé, un mail de confirmation a été envoyé." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur" });

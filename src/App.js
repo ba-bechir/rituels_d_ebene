@@ -14,6 +14,7 @@ import TisanesDetails from "./boutique/TisanesDetails.js";
 import Poudres from "./boutique/Poudres.js";
 import PoudresDetails from "./boutique/PoudresDetails.js";
 import Inscription from "./forms/Inscription.js";
+import ConfirmAccount from "./components/ConfirmAccount.js";
 
 function App() {
   const location = useLocation();
@@ -60,6 +61,7 @@ function App() {
         <Route path="/compte" element={<Connexion />} />
         <Route path="/register" element={<Inscription />} />
         <Route path="/panier" element={<h1>Panier</h1>} />
+        <Route path="/confirm/:token" element={<ConfirmAccount />} />
 
         {/* Détail produit */}
         <Route
