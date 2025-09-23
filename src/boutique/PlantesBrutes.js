@@ -5,6 +5,8 @@ import styles from "../css/boutique/Product.module.css";
 export default function PlantesBrutes() {
   const [produits, setProduits] = useState([]);
   const [hoveredId, setHoveredId] = useState(null);
+  const [quantites, setQuantites] = useState({});
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export default function PlantesBrutes() {
           }
         );
         const data = await res.json();
-        console.log("Données reçues /plantes-brutes :", data);
+        console.log("plantes Brutes:", data); // <-- ici
         setProduits(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
@@ -26,12 +28,21 @@ export default function PlantesBrutes() {
     fetchProduits();
   }, [token]);
 
+  const handleAddToCart = (produit) => {
+    const quantite = quantites[produit.id] || 1;
+    // Logique ajout panier à implémenter ici
+    console.log(
+      `Ajouter ${quantite} unités de ${produit.nom_produit} au panier.`
+    );
+  };
+
   return (
     <div className={styles["plantes-container"]}>
       <div className={styles["plantes-grid"]}>
         {Array.isArray(produits) &&
           produits.map((produit) => {
             const isHovered = hoveredId === produit.id;
+            const maxQuantite = produit.quantite_stock;
 
             return (
               <div
@@ -90,9 +101,15 @@ export default function PlantesBrutes() {
                   <div className={styles["quantite-select-container"]}>
                     <select
                       className={styles["select-quantite"]}
-                      defaultValue={1}
+                      value={quantites[produit.id] || 1}
+                      onChange={(e) =>
+                        setQuantites({
+                          ...quantites,
+                          [produit.id]: Number(e.target.value),
+                        })
+                      }
                     >
-                      {[...Array(10).keys()].map((n) => (
+                      {[...Array(maxQuantite).keys()].map((n) => (
                         <option key={n + 1} value={n + 1}>
                           {n + 1}
                         </option>
@@ -104,6 +121,7 @@ export default function PlantesBrutes() {
                           ? styles["button-hovered"]
                           : styles["button-not-hovered"]
                       }`}
+                      onClick={() => handleAddToCart(produit)}
                     >
                       Ajouter au panier
                     </button>

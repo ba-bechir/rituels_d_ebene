@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "../css/boutique/ProductDetails.module.css";
 
-export default function TisanesDetails() {
+export default function PoudresDetails() {
   const { id } = useParams();
   const [produit, setProduit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,11 +41,23 @@ export default function TisanesDetails() {
   if (error) return <p>Erreur : {error}</p>;
   if (!produit) return <p>Produit non trouvé</p>;
 
+  const stockDisponible = produit.quantite_stock ?? 0;
+  const canIncrease = quantite < stockDisponible;
   const total = (quantite * Number(produit.prix)).toFixed(2);
 
   function handleAddToCart() {
     let panier = JSON.parse(localStorage.getItem("panier")) || [];
     const index = panier.findIndex((item) => item.id === produit.id);
+
+    // Quantité déjà dans le panier
+    const quantiteDansPanier = index > -1 ? panier[index].quantite : 0;
+
+    if (quantiteDansPanier + quantite > stockDisponible) {
+      toast.error(
+        `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
+      );
+      return;
+    }
 
     if (index > -1) {
       panier[index].quantite += quantite;
@@ -83,7 +95,7 @@ export default function TisanesDetails() {
             {produit.quantite_en_g
               ? `${produit.quantite_en_g} g`
               : produit.quantite_en_sachet
-              ? `boite de ${produit.quantite_en_sachet} sachets`
+              ? `boîte de ${produit.quantite_en_sachet} sachets`
               : ""}
           </strong>
         </p>
@@ -102,14 +114,23 @@ export default function TisanesDetails() {
             <button
               type="button"
               className={styles["pb-qty-btn"]}
-              onClick={() => setQuantite((q) => q + 1)}
+              onClick={() => {
+                if (canIncrease) setQuantite((q) => q + 1);
+                else toast.info(`Stock maximal atteint : ${stockDisponible}`);
+              }}
               aria-label="Augmenter la quantité"
+              disabled={!canIncrease}
             >
               +
             </button>
           </div>
         </div>
-        <button className={styles["pb-add-to-cart"]} onClick={handleAddToCart}>
+
+        <button
+          className={styles["pb-add-to-cart"]}
+          onClick={handleAddToCart}
+          disabled={stockDisponible === 0}
+        >
           AJOUTER AU PANIER <br /> {total} €
         </button>
       </div>

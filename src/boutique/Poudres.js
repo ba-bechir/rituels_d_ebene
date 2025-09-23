@@ -2,19 +2,26 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "../css/boutique/Product.module.css";
 
-export default function Tisanes() {
+export default function Poudres() {
   const [produits, setProduits] = useState([]);
   const [hoveredId, setHoveredId] = useState(null);
+  const [quantites, setQuantites] = useState({});
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchProduits = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/poudres`, {
-          // headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/poudres`);
         const data = await res.json();
         setProduits(Array.isArray(data) ? data : []);
+
+        // Initialiser quantités à 1 par défaut pour chaque produit
+        const quantitesParDefaut = {};
+        (Array.isArray(data) ? data : []).forEach((p) => {
+          quantitesParDefaut[p.id] = 1;
+        });
+        setQuantites(quantitesParDefaut);
       } catch (err) {
         console.error(err);
       }
@@ -22,39 +29,43 @@ export default function Tisanes() {
     fetchProduits();
   }, [token]);
 
+  const handleAddToCart = (produit) => {
+    const quantite = quantites[produit.id] || 1;
+    console.log(
+      `Ajouter au panier ${quantite} unités de produit ${produit.nom_produit}`
+    );
+    // Logique ajout panier à écrire ici...
+  };
+
   return (
     <div className={styles["plantes-container"]}>
       <div className={styles["plantes-grid"]}>
         {Array.isArray(produits) &&
           produits.map((produit) => {
             const isHovered = hoveredId === produit.id;
+            const maxQuantite = Number(produit.quantite_stock) || 10;
+
             return (
               <div
                 key={produit.id}
-                className={
-                  styles["produit-card"] +
-                  " " +
-                  (isHovered ? styles["hovered"] : styles["not-hovered"])
-                }
+                className={`${styles["produit-card"]} ${
+                  isHovered ? styles.hovered : styles["not-hovered"]
+                }`}
                 onMouseEnter={() => setHoveredId(produit.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
-                {/* Badge */}
                 {produit.badge && (
                   <div
-                    className={
-                      styles["produit-badge"] +
-                      " " +
-                      (produit.badge === "NEW"
+                    className={`${styles["produit-badge"]} ${
+                      produit.badge === "NEW"
                         ? styles["produit-badge-new"]
-                        : styles["produit-badge-other"])
-                    }
+                        : styles["produit-badge-other"]
+                    }`}
                   >
                     {produit.badge}
                   </div>
                 )}
 
-                {/* Image cliquable vers détail */}
                 <Link
                   to={`/boutique/poudres/produit/${produit.id}`}
                   className={styles["produit-image-container"]}
@@ -69,7 +80,6 @@ export default function Tisanes() {
                   />
                 </Link>
 
-                {/* Nom du produit sous l'image */}
                 <div className={styles["produit-name"]}>
                   {produit.nom_produit}
                 </div>
@@ -92,22 +102,27 @@ export default function Tisanes() {
                   <div className={styles["quantite-select-container"]}>
                     <select
                       className={styles["select-quantite"]}
-                      defaultValue={1}
+                      value={quantites[produit.id]}
+                      onChange={(e) =>
+                        setQuantites({
+                          ...quantites,
+                          [produit.id]: Number(e.target.value),
+                        })
+                      }
                     >
-                      {[...Array(10).keys()].map((n) => (
+                      {[...Array(maxQuantite).keys()].map((n) => (
                         <option key={n + 1} value={n + 1}>
                           {n + 1}
                         </option>
                       ))}
                     </select>
                     <button
-                      className={
-                        styles["button-ajouter"] +
-                        " " +
-                        (isHovered
+                      className={`${styles["button-ajouter"]} ${
+                        isHovered
                           ? styles["button-hovered"]
-                          : styles["button-not-hovered"])
-                      }
+                          : styles["button-not-hovered"]
+                      }`}
+                      onClick={() => handleAddToCart(produit)}
                     >
                       Ajouter au panier
                     </button>

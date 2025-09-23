@@ -41,12 +41,23 @@ export default function PlantesBrutesDetails() {
   if (error) return <p>Erreur : {error}</p>;
   if (!produit) return <p>Produit non trouvé</p>;
 
-  const total = (quantite * produit.prix).toFixed(2);
+  const stockDisponible = produit.quantite_stock ?? 0;
+  const canIncrease = quantite < stockDisponible;
+  const total = (quantite * Number(produit.prix)).toFixed(2);
 
-  // Fonction pour ajouter au panier
   function handleAddToCart() {
     let panier = JSON.parse(localStorage.getItem("panier")) || [];
     const index = panier.findIndex((item) => item.id === produit.id);
+
+    // Quantité déjà dans le panier
+    const quantiteDansPanier = index > -1 ? panier[index].quantite : 0;
+
+    if (quantiteDansPanier + quantite > stockDisponible) {
+      toast.error(
+        `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
+      );
+      return;
+    }
 
     if (index > -1) {
       panier[index].quantite += quantite;
@@ -55,7 +66,7 @@ export default function PlantesBrutesDetails() {
         id: produit.id,
         nom: produit.nom_produit,
         image: produit.image,
-        prix: produit.prix,
+        prix: Number(produit.prix),
         quantite: quantite,
         quantite_en_g: produit.quantite_en_g,
       });
@@ -78,7 +89,7 @@ export default function PlantesBrutesDetails() {
         )}
         <p className={styles["pb-pricing"]}>
           <strong>
-            {produit.prix} € /{" "}
+            {Number(produit.prix).toFixed(2)} € /{" "}
             {produit.quantite_en_g ? `${produit.quantite_en_g} g` : ""}
           </strong>
         </p>
@@ -97,14 +108,22 @@ export default function PlantesBrutesDetails() {
             <button
               type="button"
               className={styles["pb-qty-btn"]}
-              onClick={() => setQuantite((q) => q + 1)}
+              onClick={() => {
+                if (canIncrease) setQuantite((q) => q + 1);
+                else toast.info(`Stock maximal atteint : ${stockDisponible}`);
+              }}
               aria-label="Augmenter la quantité"
+              disabled={!canIncrease}
             >
               +
             </button>
           </div>
         </div>
-        <button className={styles["pb-add-to-cart"]} onClick={handleAddToCart}>
+        <button
+          className={styles["pb-add-to-cart"]}
+          onClick={handleAddToCart}
+          disabled={stockDisponible === 0}
+        >
           AJOUTER AU PANIER <br /> {total} €
         </button>
       </div>
@@ -149,7 +168,15 @@ function SectionToggle({ title, isOpen, onClick, content, styles }) {
 
   return (
     <>
-      <div className={styles["pb-section-header"]} onClick={onClick}>
+      <div
+        className={styles["pb-section-header"]}
+        onClick={onClick}
+        tabIndex={0}
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onClick();
+        }}
+      >
         <span className={styles["pb-section-arrow"]}>&gt;</span>
         <span className={styles["pb-section-title"]}>{title}</span>
       </div>
