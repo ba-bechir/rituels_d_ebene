@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import styles from "../css/boutique/ProductDetails.module.css";
 
 export default function TisanesDetails() {
@@ -40,7 +41,28 @@ export default function TisanesDetails() {
   if (error) return <p>Erreur : {error}</p>;
   if (!produit) return <p>Produit non trouvé</p>;
 
-  const total = (quantite * produit.prix).toFixed(2);
+  const total = (quantite * Number(produit.prix)).toFixed(2);
+
+  function handleAddToCart() {
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+    const index = panier.findIndex((item) => item.id === produit.id);
+
+    if (index > -1) {
+      panier[index].quantite += quantite;
+    } else {
+      panier.push({
+        id: produit.id,
+        nom: produit.nom_produit,
+        image: produit.image,
+        prix: Number(produit.prix),
+        quantite: quantite,
+        quantite_en_g: produit.quantite_en_g,
+        quantite_en_sachet: produit.quantite_en_sachet,
+      });
+    }
+    localStorage.setItem("panier", JSON.stringify(panier));
+    toast.success("Produit ajouté au panier !");
+  }
 
   return (
     <div className={styles["pb-global"]}>
@@ -57,7 +79,7 @@ export default function TisanesDetails() {
 
         <p className={styles["pb-pricing"]}>
           <strong>
-            {produit.prix} € /{" "}
+            {Number(produit.prix).toFixed(2)} € /{" "}
             {produit.quantite_en_g
               ? `${produit.quantite_en_g} g`
               : produit.quantite_en_sachet
@@ -87,7 +109,7 @@ export default function TisanesDetails() {
             </button>
           </div>
         </div>
-        <button className={styles["pb-add-to-cart"]}>
+        <button className={styles["pb-add-to-cart"]} onClick={handleAddToCart}>
           AJOUTER AU PANIER <br /> {total} €
         </button>
       </div>
@@ -132,7 +154,15 @@ function SectionToggle({ title, isOpen, onClick, content, styles }) {
 
   return (
     <>
-      <div className={styles["pb-section-header"]} onClick={onClick}>
+      <div
+        className={styles["pb-section-header"]}
+        onClick={onClick}
+        tabIndex={0}
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onClick();
+        }}
+      >
         <span className={styles["pb-section-arrow"]}>&gt;</span>
         <span className={styles["pb-section-title"]}>{title}</span>
       </div>

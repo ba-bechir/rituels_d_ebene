@@ -15,6 +15,9 @@ import Poudres from "./boutique/Poudres.js";
 import PoudresDetails from "./boutique/PoudresDetails.js";
 import Inscription from "./forms/Inscription.js";
 import ConfirmAccount from "./components/ConfirmAccount.js";
+import Panier from "./boutique/Panier.js";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const location = useLocation();
@@ -60,7 +63,7 @@ function App() {
         <Route path="/contact" element={<h1>Contact</h1>} />
         <Route path="/compte" element={<Connexion />} />
         <Route path="/register" element={<Inscription />} />
-        <Route path="/panier" element={<h1>Panier</h1>} />
+        <Route path="/panier" element={<Panier />} />
         <Route path="/confirm/:token" element={<ConfirmAccount />} />
 
         {/* Détail produit */}
@@ -96,6 +99,8 @@ function App() {
           }
         />
       </Routes>
+
+      <ToastContainer position="top-right" autoClose={3000} />
 
       <Footer />
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../css/boutique/ProductDetails.module.css";
+import { toast } from "react-toastify";
 
 export default function PlantesBrutesDetails() {
   const { id } = useParams();
@@ -42,6 +43,27 @@ export default function PlantesBrutesDetails() {
 
   const total = (quantite * produit.prix).toFixed(2);
 
+  // Fonction pour ajouter au panier
+  function handleAddToCart() {
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+    const index = panier.findIndex((item) => item.id === produit.id);
+
+    if (index > -1) {
+      panier[index].quantite += quantite;
+    } else {
+      panier.push({
+        id: produit.id,
+        nom: produit.nom_produit,
+        image: produit.image,
+        prix: produit.prix,
+        quantite: quantite,
+        quantite_en_g: produit.quantite_en_g,
+      });
+    }
+    localStorage.setItem("panier", JSON.stringify(panier));
+    toast.success("Produit ajouté au panier !");
+  }
+
   return (
     <div className={styles["pb-global"]}>
       {/* Partie gauche : fiche produit */}
@@ -54,7 +76,6 @@ export default function PlantesBrutesDetails() {
             alt={produit.nom_produit}
           />
         )}
-
         <p className={styles["pb-pricing"]}>
           <strong>
             {produit.prix} € /{" "}
@@ -83,7 +104,7 @@ export default function PlantesBrutesDetails() {
             </button>
           </div>
         </div>
-        <button className={styles["pb-add-to-cart"]}>
+        <button className={styles["pb-add-to-cart"]} onClick={handleAddToCart}>
           AJOUTER AU PANIER <br /> {total} €
         </button>
       </div>

@@ -1,0 +1,121 @@
+.cartContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.cartList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cartItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.productInfo {
+  flex: 3;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.productImage {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.productDetails {
+  flex: 1;
+}
+
+.productName {
+  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+}
+
+.price {
+  margin: 0;
+  color: #555;
+}
+
+.quantityControl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qtyBtn {
+  background-color: #ddd;
+  border: none;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.qtyBtn:hover {
+  background-color: #bbb;
+}
+
+.qtyValue {
+  width: 24px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.subtotal {
+  flex: 1;
+  font-weight: 600;
+  text-align: right;
+  color: #222;
+}
+
+.deleteBtn {
+  background-color: #e74c3c;
+  border: none;
+  color: white;
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+.deleteBtn:hover {
+  background-color: #c0392b;
+}
+
+.totalContainer {
+  margin-top: 1.5rem;
+  text-align: right;
+  font-size: 1.4rem;
+  color: #111;
+  font-weight: 700;
+}
+
+.empty {
+  text-align: center;
+  margin: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
