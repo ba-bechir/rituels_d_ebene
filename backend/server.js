@@ -45,7 +45,7 @@ const SECRET_JWT = process.env.SECRET_JWT;
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/api" : "";
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -139,7 +139,7 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
   try {
     connection = await getConnection();
     const [rows] = await connection.execute(
-      "SELECT email, mdp, role FROM utilisateur WHERE email = ?",
+      "SELECT id, email, mdp, role FROM utilisateur WHERE email = ?",
       [email]
     );
     if (rows.length === 0)
@@ -151,7 +151,8 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
     const token = jwt.sign({ email: user.email, role: user.role }, SECRET_JWT, {
       expiresIn: "1h",
     });
-    res.json({ token, role: user.role });
+    res.json({ token, role: user.role, userId: user.id });
+    console.log(user.id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur" });
@@ -666,6 +667,119 @@ app.get(`${BASE_PATH}/produit/:id`, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const localCart = Array.isArray(req.body.panier) ? req.body.panier : [];
+    const connection = await getConnection();
+    const { email } = req.body;
+
+    const [rows] = await connection.execute(
+      "SELECT id, email, mdp, role FROM utilisateur WHERE email = ?",
+      [email]
+    );
+    const user = rows[0];
+
+    if (!user || !user.id) {
+      console.error("Utilisateur non trouvé en base !");
+      return res.status(404).json({ message: "Utilisateur inconnu." });
+    }
+
+    // Récupération du panier existant
+    const [existingCartRows] = await connection.execute(
+      "SELECT * FROM cart WHERE id_utilisateur = ?",
+      [user.id]
+    );
+
+    // Liste des ids produits locaux
+    const localIds = localCart
+      .map((item) =>
+        typeof item.id === "number" && !isNaN(item.id) ? item.id : null
+      )
+      .filter((id) => id !== undefined && id !== null);
+
+    // Suppression des produits hors panier local
+    if (localIds.length > 0) {
+      const placeholders = localIds.map(() => "?").join(",");
+      console.log("DELETE params:", user.id, ...localIds);
+      await connection.execute(
+        `DELETE FROM cart WHERE id_utilisateur = ? AND id_produit NOT IN (${placeholders})`,
+        [user.id, ...localIds]
+      );
+    } else {
+      // Si panier vide, suppression intégrale
+      console.log("DELETE ALL - userId:", user.id);
+      await connection.execute("DELETE FROM cart WHERE id_utilisateur = ?", [
+        user.id,
+      ]);
+    }
+
+    // Parcours et traitement du panier local
+    for (const item of localCart) {
+      // Sécurise les valeurs
+      const produitId =
+        typeof item.id === "number" && !isNaN(item.id) ? item.id : null;
+      const quantite =
+        typeof item.quantite === "number" && item.quantite > 0
+          ? item.quantite
+          : 1;
+
+      // Stock check
+      const [[stockInfo]] = await connection.execute(
+        "SELECT quantite_stock FROM unite_vente WHERE id_produit = ?",
+        [produitId]
+      );
+
+      if (
+        !stockInfo ||
+        !Number.isInteger(stockInfo.quantite_stock) ||
+        stockInfo.quantite_stock === 0
+      ) {
+        console.warn(
+          ">> SUPPRESSION car stock nul/indéfini :",
+          user.id,
+          produitId
+        );
+        /*await connection.execute(
+          "DELETE FROM cart WHERE id_utilisateur = ? AND id_produit = ?",
+          [user.id, produitId]
+        );*/
+        //A la place, supprimer le panier de la session et lorsqu'on est connecté et qu'on clique sur Panier, ça doit afficher le panier persisté
+        continue;
+      }
+
+      // Recherche présence actuelle en base
+      const found = existingCartRows.find((ci) => ci.id_produit === produitId);
+
+      if (found) {
+        await connection.execute(
+          "UPDATE cart SET quantite = ? WHERE id_utilisateur = ? AND id_produit = ?",
+          [quantite, user.id, produitId]
+        );
+      } else {
+        await connection.execute(
+          "INSERT INTO cart (id_utilisateur, id_produit, quantite) VALUES (?, ?, ?)",
+          [user.id, produitId, quantite]
+        );
+      }
+    }
+
+    // Renvoie l'état final du panier
+    const [updatedCart] = await connection.execute(
+      "SELECT * FROM cart WHERE id_utilisateur = ?",
+      [user.id]
+    );
+    console.log("Cart synchronisé final :", updatedCart);
+
+    res.json({ panier: updatedCart });
+  } catch (error) {
+    console.error("Erreur synchronisation panier :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la synchronisation du panier" });
   }
 });
 

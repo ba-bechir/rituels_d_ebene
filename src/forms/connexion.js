@@ -3,12 +3,37 @@ import { useNavigate } from "react-router-dom";
 import "../css/Connexion.css";
 import logo from "../images/logo-rituels_d_ebene.jpg";
 import config from "../config.js";
+import { toast } from "react-toastify"; // Si tu veux afficher des notifications d'erreur/succès
 
 const Connexion = () => {
   const [email, setEmail] = useState("");
   const [mdp, setMdp] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+
+  // Fonction interne pour synchroniser le panier local avec base
+  async function syncCartToBackend(userId, token) {
+    const panierLocal = JSON.parse(localStorage.getItem("panier")) || [];
+
+    try {
+      const response = await fetch(`${config.apiUrl}/cart/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ panier: panierLocal, email }),
+      });
+
+      if (!response.ok) throw new Error("Erreur synchronisation panier");
+
+      const data = await response.json();
+      localStorage.setItem("panier", JSON.stringify(data.panier));
+    } catch (error) {
+      console.error("Erreur sync panier:", error);
+      toast.error("Erreur lors de la synchronisation du panier.");
+    }
+  }
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
@@ -27,9 +52,9 @@ const Connexion = () => {
       }
 
       const data = await response.json();
-      console.log("Réponse login:", data);
+      console.log("Réponse login:", data.userId);
 
-      if (!data.role || !data.token) {
+      if (!data.role || !data.token || !data.userId) {
         setMessage("Réponse serveur invalide");
         return;
       }
@@ -38,12 +63,15 @@ const Connexion = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
 
+      // Synchronisation du panier local avec la base
+      await syncCartToBackend(data.userId, data.token);
+
       // Redirection selon le rôle
       const roleNormalized = data.role.trim().toLowerCase();
       if (roleNormalized === "admin") {
-        navigate("/manage-portal"); // page admin
+        navigate("/manage-portal");
       } else {
-        navigate("/"); // utilisateur classique
+        navigate("/");
       }
     } catch (error) {
       setMessage("Erreur réseau ou serveur");
@@ -89,9 +117,9 @@ const Connexion = () => {
           Valider
         </button>
       </form>
+
       {message && <p className="connexion-message">{message}</p>}
 
-      {/* --- Nouveau bloc "Créer un compte" --- */}
       <div className="create-account-container">
         <p className="new-client-text">Nouveau client ?</p>
         <button
