@@ -1,11 +1,11 @@
 .navbar {
   display: flex;
-  align-items: center;        /* centre verticalement tout le contenu */
+  align-items: center; /* centre verticalement tout le contenu */
   justify-content: space-between;
   background-color: rgb(180, 132, 94);
   color: white;
   font-family: Arial, sans-serif;
-  height: 100px;              /* hauteur fixe */
+  height: 100px; /* hauteur fixe */
   padding: 0 20px;
   box-sizing: border-box;
 }
@@ -16,17 +16,17 @@
 }
 
 .logo {
-  height: 90px;               /* légèrement plus petit que la navbar */
+  height: 90px; /* légèrement plus petit que la navbar */
   width: auto;
-  margin-top: 5px;            /* descend légèrement le logo */
+  margin-top: 5px; /* descend légèrement le logo */
 }
 
 .nav-links {
   display: flex;
   gap: 3rem;
-  flex-grow: 1;               /* occupe l’espace central */
-  justify-content: center;    /* liens centrés horizontalement */
-  align-items: center;        /* liens alignés verticalement avec logo */
+  flex-grow: 1; /* occupe l’espace central */
+  justify-content: center; /* liens centrés horizontalement */
+  align-items: center; /* liens alignés verticalement avec logo */
   margin: 0;
   padding: 0;
   line-height: normal;
@@ -35,8 +35,8 @@
 .nav-icons {
   display: flex;
   gap: 1.5rem;
-  align-items: center;        /* icônes centrées verticalement */
-  margin-right: 10px;         /* rapproche un peu du centre */
+  align-items: center; /* icônes centrées verticalement */
+  margin-right: 10px; /* rapproche un peu du centre */
 }
 
 .nav-links a,
@@ -50,8 +50,8 @@
   background: none;
   border: none;
   padding: 0;
-  position: relative;  /* nécessaire pour décaler avec top */
-  top: -8px;           /* déplace tout le bloc vers le haut de 5px */
+  position: relative; /* nécessaire pour décaler avec top */
+  top: -8px; /* déplace tout le bloc vers le haut de 5px */
 }
 
 .nav-links a:hover,
@@ -72,7 +72,7 @@
   position: absolute;
   background-color: #966e3c;
   min-width: 200px;
-  box-shadow: 0px 8px 16px rgba(0,0,0,0.3);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
   z-index: 1;
 }
 
@@ -92,4 +92,38 @@
 .dropdown-content a:hover {
   background-color: #ffd700;
   color: black;
+}
+
+.icon-link,
+.logout-btn {
+  display: flex;
+  align-items: center;
+  /* Ajoute ici les styles communs que tu veux */
+}
+
+.icon-link,
+.logout-btn {
+  display: flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.2rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  top: -8px;
+  letter-spacing: inherit;
+  font-family: Arial, sans-serif; /* ou inherit si tu veux hériter */
+  line-height: normal;
+}
+
+/* Hover identique */
+.icon-link:hover,
+.logout-btn:hover {
+  color: #ffd700;
+  text-decoration: underline;
 }

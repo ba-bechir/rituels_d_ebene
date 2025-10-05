@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../css/Connexion.css";
 import logo from "../images/logo-rituels_d_ebene.jpg";
 import config from "../config.js";
-import { toast } from "react-toastify"; // Si tu veux afficher des notifications d'erreur/succès
+import { toast } from "react-toastify";
 
 const Connexion = () => {
   const [email, setEmail] = useState("");
@@ -68,9 +68,14 @@ const Connexion = () => {
 
       // Redirection selon le rôle
       const roleNormalized = data.role.trim().toLowerCase();
+
       if (roleNormalized === "admin") {
-        navigate("/manage-portal");
+        navigate("/manage-portal"); // Page d'administration
+      } else if (roleNormalized === "client") {
+        navigate("/"); // Page d'accueil pour les clients
       } else {
+        // Pour tout autre rôle non reconnu, redirection vers l'accueil
+        console.warn("Rôle non reconnu:", data.role);
         navigate("/");
       }
     } catch (error) {
