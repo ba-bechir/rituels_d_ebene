@@ -15,18 +15,39 @@ export default function Panier() {
     setPanier(newPanier);
   };
 
+  // Fonction d'ajout au panier pour utilisateur non connecté
+  const ajouterAuPanier = (produit) => {
+    const panierActuel = JSON.parse(localStorage.getItem("panier")) || [];
+    const index = panierActuel.findIndex((item) => item.id === produit.id);
+
+    if (index > -1) {
+      // Produit déjà dans le panier, on augmente si stock le permet
+      if (panierActuel[index].quantite < produit.quantite_stock) {
+        panierActuel[index].quantite += 1;
+        panierActuel[index].quantite_stock = produit.quantite_stock; // update stock si besoin
+      } else {
+        toast.info(
+          `Stock maximal atteint pour ${produit.nom} : ${produit.quantite_stock}`
+        );
+      }
+    } else {
+      // Ajout du nouveau produit avec stock réel
+      panierActuel.push({
+        id: produit.id,
+        nom: produit.nom,
+        prix: produit.prix,
+        quantite: 1,
+        quantite_stock: produit.quantite_stock,
+        image: produit.image || null,
+      });
+    }
+
+    localStorage.setItem("panier", JSON.stringify(panierActuel));
+    setPanier(panierActuel);
+  };
+
   const diminuerQuantite = (id) => {
     const newPanier = panier.map((item) => {
-      console.log(
-        item.nom,
-        "quantite:",
-        item.quantite,
-        "stock:",
-        item.quantite_stock,
-        typeof item.quantite_stock
-      );
-      const stockDisponible = Number(item.quantite_stock) || 0;
-      const canIncrease = item.quantite < stockDisponible;
       if (item.id === id) {
         return {
           ...item,
@@ -53,6 +74,7 @@ export default function Panier() {
           toast.info(
             `Stock maximal atteint pour ${item.nom} : ${stockDisponible}`
           );
+          return item;
         }
       }
       return item;

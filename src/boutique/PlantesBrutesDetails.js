@@ -9,7 +9,7 @@ export default function PlantesBrutesDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Sections toggles
+  // Sections toggles etc.
   const [openDescriptions, setOpenDescriptions] = useState(false);
   const [openBienfait, setOpenBienfait] = useState(false);
   const [openUsage, setOpenUsage] = useState(false);
@@ -45,34 +45,54 @@ export default function PlantesBrutesDetails() {
   const canIncrease = quantite < stockDisponible;
   const total = (quantite * Number(produit.prix)).toFixed(2);
 
+  // Fonction d’ajout au panier (gestion locale pour non connecté)
+  function ajouterAuPanier(produitAAjouter, quantiteAAjouter) {
+    const panier = JSON.parse(localStorage.getItem("panier")) || [];
+    const index = panier.findIndex((item) => item.id === produitAAjouter.id);
+
+    if (index > -1) {
+      // Produit déjà dans panier = augmenter si possible
+      if (
+        panier[index].quantite + quantiteAAjouter <=
+        produitAAjouter.quantite_stock
+      ) {
+        panier[index].quantite += quantiteAAjouter;
+        panier[index].quantite_stock = produitAAjouter.quantite_stock;
+      } else {
+        toast.error(
+          `Stock maximal atteint pour ${produitAAjouter.nom_produit} : ${produitAAjouter.quantite_stock}`
+        );
+        return false; // Échec ajout (stock max)
+      }
+    } else {
+      // Produit absent = on ajoute avec la quantité choisie
+      panier.push({
+        id: produitAAjouter.id,
+        nom: produitAAjouter.nom_produit,
+        image: produitAAjouter.image || null,
+        prix: Number(produitAAjouter.prix),
+        quantite: quantiteAAjouter,
+        quantite_stock: produitAAjouter.quantite_stock,
+        quantite_en_g: produitAAjouter.quantite_en_g,
+      });
+    }
+
+    localStorage.setItem("panier", JSON.stringify(panier));
+    return true; // Succès
+  }
+
+  // Handler bouton ajout panier
   function handleAddToCart() {
-    let panier = JSON.parse(localStorage.getItem("panier")) || [];
-    const index = panier.findIndex((item) => item.id === produit.id);
-
-    // Quantité déjà dans le panier
-    const quantiteDansPanier = index > -1 ? panier[index].quantite : 0;
-
-    if (quantiteDansPanier + quantite > stockDisponible) {
+    if (quantite > stockDisponible) {
       toast.error(
         `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
       );
       return;
     }
-
-    if (index > -1) {
-      panier[index].quantite += quantite;
-    } else {
-      panier.push({
-        id: produit.id,
-        nom: produit.nom_produit,
-        image: produit.image,
-        prix: Number(produit.prix),
-        quantite: quantite,
-        quantite_en_g: produit.quantite_en_g,
-      });
+    const success = ajouterAuPanier(produit, quantite);
+    if (success) {
+      toast.success("Produit ajouté au panier !");
     }
-    localStorage.setItem("panier", JSON.stringify(panier));
-    toast.success("Produit ajouté au panier !");
   }
 
   return (

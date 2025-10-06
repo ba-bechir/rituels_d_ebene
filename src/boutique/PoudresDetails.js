@@ -45,35 +45,52 @@ export default function PoudresDetails() {
   const canIncrease = quantite < stockDisponible;
   const total = (quantite * Number(produit.prix)).toFixed(2);
 
+  // Fonction d’ajout au panier local/session pour utilisateur non connecté
+  function ajouterAuPanier(produitAAjouter, quantiteAAjouter) {
+    const panier = JSON.parse(localStorage.getItem("panier")) || [];
+    const index = panier.findIndex((item) => item.id === produitAAjouter.id);
+
+    if (index > -1) {
+      if (
+        panier[index].quantite + quantiteAAjouter <=
+        produitAAjouter.quantite_stock
+      ) {
+        panier[index].quantite += quantiteAAjouter;
+        panier[index].quantite_stock = produitAAjouter.quantite_stock;
+      } else {
+        toast.error(
+          `Stock maximal atteint pour ${produitAAjouter.nom_produit} : ${produitAAjouter.quantite_stock}`
+        );
+        return false;
+      }
+    } else {
+      panier.push({
+        id: produitAAjouter.id,
+        nom: produitAAjouter.nom_produit,
+        image: produitAAjouter.image || null,
+        prix: Number(produitAAjouter.prix),
+        quantite: quantiteAAjouter,
+        quantite_stock: produitAAjouter.quantite_stock,
+        quantite_en_g: produitAAjouter.quantite_en_g,
+        quantite_en_sachet: produitAAjouter.quantite_en_sachet,
+      });
+    }
+
+    localStorage.setItem("panier", JSON.stringify(panier));
+    return true;
+  }
+
   function handleAddToCart() {
-    let panier = JSON.parse(localStorage.getItem("panier")) || [];
-    const index = panier.findIndex((item) => item.id === produit.id);
-
-    // Quantité déjà dans le panier
-    const quantiteDansPanier = index > -1 ? panier[index].quantite : 0;
-
-    if (quantiteDansPanier + quantite > stockDisponible) {
+    if (quantite > stockDisponible) {
       toast.error(
         `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
       );
       return;
     }
-
-    if (index > -1) {
-      panier[index].quantite += quantite;
-    } else {
-      panier.push({
-        id: produit.id,
-        nom: produit.nom_produit,
-        image: produit.image,
-        prix: Number(produit.prix),
-        quantite: quantite,
-        quantite_en_g: produit.quantite_en_g,
-        quantite_en_sachet: produit.quantite_en_sachet,
-      });
+    const success = ajouterAuPanier(produit, quantite);
+    if (success) {
+      toast.success("Produit ajouté au panier !");
     }
-    localStorage.setItem("panier", JSON.stringify(panier));
-    toast.success("Produit ajouté au panier !");
   }
 
   return (

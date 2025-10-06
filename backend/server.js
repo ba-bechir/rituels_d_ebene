@@ -701,22 +701,6 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
       )
       .filter((id) => id !== undefined && id !== null);
 
-    // Suppression des produits hors panier local
-    if (localIds.length > 0) {
-      const placeholders = localIds.map(() => "?").join(",");
-      console.log("DELETE params:", user.id, ...localIds);
-      await connection.execute(
-        `DELETE FROM cart WHERE id_utilisateur = ? AND id_produit NOT IN (${placeholders})`,
-        [user.id, ...localIds]
-      );
-    } else {
-      // Si panier vide, suppression intégrale
-      console.log("DELETE ALL - userId:", user.id);
-      await connection.execute("DELETE FROM cart WHERE id_utilisateur = ?", [
-        user.id,
-      ]);
-    }
-
     // Parcours et traitement du panier local
     for (const item of localCart) {
       // Sécurise les valeurs
@@ -769,12 +753,18 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
 
     // Renvoie l'état final du panier
     const [updatedCart] = await connection.execute(
-      "SELECT * FROM cart WHERE id_utilisateur = ?",
+      `SELECT c.id_produit AS id, c.quantite, p.nom_produit AS nom, uv.prix, uv.quantite_stock, p.image FROM cart c JOIN produit p ON c.id_produit = p.id JOIN unite_vente uv ON uv.id_produit = p.id
+   WHERE c.id_utilisateur = ?`,
       [user.id]
     );
     console.log("Cart synchronisé final :", updatedCart);
 
-    res.json({ panier: updatedCart });
+    const formatedCart = updatedCart.map((item) => ({
+      ...item,
+      image: item.image ? Buffer.from(item.image).toString("base64") : null,
+    }));
+
+    res.json({ panier: formatedCart });
   } catch (error) {
     console.error("Erreur synchronisation panier :", error);
     res
