@@ -119,3 +119,86 @@
   font-size: 1.2rem;
   color: #666;
 }
+
+.cartPageContainer {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  padding: 36px;
+}
+.cartListColumn {
+  flex: 2;
+}
+.summaryColumn {
+  flex: 1;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 2.2rem 2rem 1rem 2rem;
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: 0 3px 18px #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.inputZone {
+  margin-bottom: 1.25rem;
+}
+.inputSelect {
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  width: 100%;
+  background: white;
+}
+.summaryTitle {
+  font-size: 1.2rem;
+  margin: 0.7rem 0;
+  font-weight: 700;
+}
+.summaryBlock {
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.8rem;
+}
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  color: #333;
+  font-size: 1.08rem;
+  margin-bottom: 0.55rem;
+}
+.totalEstimeRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.28rem;
+  font-weight: bold;
+  margin: 1.3rem 0 1.2rem 0;
+}
+.commanderBtn {
+  background: #111;
+  color: white;
+  width: 100%;
+  padding: 1.06rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 1.15rem;
+  letter-spacing: 0.5px;
+}
+.paymentIcons {
+  margin-top: 0.2rem;
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+.secureText {
+  margin-top: 0.65rem;
+  font-size: 1.04rem;
+  text-align: center;
+  color: #333;
+}

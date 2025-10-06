@@ -15,47 +15,12 @@ export default function Panier() {
     setPanier(newPanier);
   };
 
-  // Fonction d'ajout au panier pour utilisateur non connecté
-  const ajouterAuPanier = (produit) => {
-    const panierActuel = JSON.parse(localStorage.getItem("panier")) || [];
-    const index = panierActuel.findIndex((item) => item.id === produit.id);
-
-    if (index > -1) {
-      // Produit déjà dans le panier, on augmente si stock le permet
-      if (panierActuel[index].quantite < produit.quantite_stock) {
-        panierActuel[index].quantite += 1;
-        panierActuel[index].quantite_stock = produit.quantite_stock; // update stock si besoin
-      } else {
-        toast.info(
-          `Stock maximal atteint pour ${produit.nom} : ${produit.quantite_stock}`
-        );
-      }
-    } else {
-      // Ajout du nouveau produit avec stock réel
-      panierActuel.push({
-        id: produit.id,
-        nom: produit.nom,
-        prix: produit.prix,
-        quantite: 1,
-        quantite_stock: produit.quantite_stock,
-        image: produit.image || null,
-      });
-    }
-
-    localStorage.setItem("panier", JSON.stringify(panierActuel));
-    setPanier(panierActuel);
-  };
-
   const diminuerQuantite = (id) => {
-    const newPanier = panier.map((item) => {
-      if (item.id === id) {
-        return {
-          ...item,
-          quantite: item.quantite > 1 ? item.quantite - 1 : 1,
-        };
-      }
-      return item;
-    });
+    const newPanier = panier.map((item) =>
+      item.id === id
+        ? { ...item, quantite: item.quantite > 1 ? item.quantite - 1 : 1 }
+        : item
+    );
     updateLocalStorageAndState(newPanier);
   };
 
@@ -66,15 +31,11 @@ export default function Panier() {
         const stockDisponible = Number(item.quantite_stock) || 0;
         if (item.quantite < stockDisponible) {
           quantiteChangee = true;
-          return {
-            ...item,
-            quantite: item.quantite + 1,
-          };
+          return { ...item, quantite: item.quantite + 1 };
         } else {
           toast.info(
             `Stock maximal atteint pour ${item.nom} : ${stockDisponible}`
           );
-          return item;
         }
       }
       return item;
@@ -99,64 +60,106 @@ export default function Panier() {
   }
 
   return (
-    <section className={styles.cartContainer}>
-      <h1 className={styles.title}>Votre panier</h1>
-      <ul className={styles.cartList}>
-        {panier.map((item) => {
-          const stockDisponible = Number(item.quantite_stock) || 0;
-          const canIncrease = item.quantite < stockDisponible;
-          return (
-            <li key={item.id} className={styles.cartItem}>
-              <div className={styles.productInfo}>
-                {item.image && (
-                  <img
-                    src={`data:image/jpeg;base64,${item.image}`}
-                    alt={item.nom}
-                    className={styles.productImage}
-                  />
-                )}
-                <div className={styles.productDetails}>
-                  <h2 className={styles.productName}>{item.nom}</h2>
-                  <p className={styles.price}>
-                    Prix unitaire : {Number(item.prix).toFixed(2)} €
-                  </p>
+    <div className={styles.cartPageContainer}>
+      {/* colonne gauche - panier */}
+      <section className={styles.cartListColumn}>
+        <h1 className={styles.title}>Mon panier</h1>
+        <ul className={styles.cartList}>
+          {panier.map((item) => {
+            const stockDisponible = Number(item.quantite_stock) || 0;
+            const canIncrease = item.quantite < stockDisponible;
+            return (
+              <li key={item.id} className={styles.cartItem}>
+                <div className={styles.productInfo}>
+                  {item.image && (
+                    <img
+                      src={`data:image/jpeg;base64,${item.image}`}
+                      alt={item.nom}
+                      className={styles.productImage}
+                    />
+                  )}
+                  <div className={styles.productDetails}>
+                    <h2 className={styles.productName}>{item.nom}</h2>
+                    <p className={styles.price}>
+                      Prix unitaire : {Number(item.prix).toFixed(2)} €
+                    </p>
+                    {!item.quantite_en_sachet || item.quantite_en_sachet === 0
+                      ? `Sachet de ${Number(item.quantite_en_g)} g`
+                      : `Boite de ${Number(
+                          item.quantite_en_sachet
+                        )} infusions`}{" "}
+                  </div>
                 </div>
-              </div>
-              <div className={styles.quantityControl}>
+                <div className={styles.quantityControl}>
+                  <button
+                    onClick={() => diminuerQuantite(item.id)}
+                    aria-label={`Diminuer la quantité de ${item.nom}`}
+                    className={styles.qtyBtn}
+                  >
+                    -
+                  </button>
+                  <span className={styles.qtyValue}>{item.quantite}</span>
+                  <button
+                    onClick={() => augmenterQuantite(item.id)}
+                    aria-label={`Augmenter la quantité de ${item.nom}`}
+                    className={styles.qtyBtn}
+                    disabled={!canIncrease}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className={styles.subtotal}>
+                  {(Number(item.prix) * item.quantite).toFixed(2)} €
+                </div>
                 <button
-                  onClick={() => diminuerQuantite(item.id)}
-                  aria-label={`Diminuer la quantité de ${item.nom}`}
-                  className={styles.qtyBtn}
+                  onClick={() => supprimerProduit(item.id)}
+                  aria-label={`Supprimer ${item.nom} du panier`}
+                  className={styles.deleteBtn}
                 >
-                  -
+                  Supprimer
                 </button>
-                <span className={styles.qtyValue}>{item.quantite}</span>
-                <button
-                  onClick={() => augmenterQuantite(item.id)}
-                  aria-label={`Augmenter la quantité de ${item.nom}`}
-                  className={styles.qtyBtn}
-                  disabled={!canIncrease}
-                >
-                  +
-                </button>
-              </div>
-              <div className={styles.subtotal}>
-                {(Number(item.prix) * item.quantite).toFixed(2)} €
-              </div>
-              <button
-                onClick={() => supprimerProduit(item.id)}
-                aria-label={`Supprimer ${item.nom} du panier`}
-                className={styles.deleteBtn}
-              >
-                Supprimer
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <div className={styles.totalContainer}>
-        <strong>Total : {total.toFixed(2)} €</strong>
-      </div>
-    </section>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {/* colonne droite - récapitulatif */}
+      <aside className={styles.summaryColumn}>
+        <h2 className={styles.summaryTitle}>Récapitulatif</h2>
+        <div className={styles.summaryBlock}>
+          <div className={styles.summaryRow}>
+            <span>
+              Sous-total ({panier.reduce((acc, elt) => acc + elt.quantite, 0)}{" "}
+              article
+              {panier.reduce((acc, elt) => acc + elt.quantite, 0) > 1
+                ? "s"
+                : ""}
+              )
+            </span>
+            <span>{total.toFixed(2)}€</span>
+          </div>
+          <div className={styles.summaryRow}>
+            <span>Livraison</span>
+            <span>Calculé à l’étape suivante</span>
+          </div>
+        </div>
+        <div className={styles.totalEstimeRow}>
+          <span className={styles.totalLabel}>Total estimé</span>
+          <span className={styles.totalValue}>{total.toFixed(2)}€</span>
+        </div>
+        <button className={styles.commanderBtn}>
+          COMMANDER | {total.toFixed(2)} €
+        </button>
+        <div className={styles.paymentIcons}>
+          <img src="/cb.png" alt="CB" height={32} />
+          <img src="/visa.png" alt="Visa" height={32} />
+          <img src="/mastercard.png" alt="Mastercard" height={32} />
+          <img src="/amex.png" alt="Amex" height={32} />
+          <img src="/paypal.png" alt="Paypal" height={32} />
+        </div>
+        <div className={styles.secureText}>Paiement sécurisé</div>
+      </aside>
+    </div>
   );
 }
