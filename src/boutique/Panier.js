@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "../css/boutique/Panier.module.css";
 
 export default function Panier() {
   const [panier, setPanier] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
@@ -28,7 +30,7 @@ export default function Panier() {
     let quantiteChangee = false;
     const newPanier = panier.map((item) => {
       if (item.id === id) {
-        const stockDisponible = Number(item.quantite_stock) || 0;
+        const stockDisponible = Number(item.quantite_stock) ?? 0;
         if (item.quantite < stockDisponible) {
           quantiteChangee = true;
           return { ...item, quantite: item.quantite + 1 };
@@ -51,9 +53,19 @@ export default function Panier() {
   };
 
   const total = panier.reduce(
-    (sum, item) => sum + Number(item.prix) * item.quantite,
+    (sum, item) => sum + (Number(item.prix) || 0) * (item.quantite || 0),
     0
   );
+
+  // Redirection en fonction du login ou non
+  const handleCommander = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/compte?from=checkout");
+    } else {
+      navigate("/checkout");
+    }
+  };
 
   if (panier.length === 0) {
     return <p className={styles.empty}>Votre panier est vide.</p>;
@@ -66,8 +78,8 @@ export default function Panier() {
         <h1 className={styles.title}>Mon panier</h1>
         <ul className={styles.cartList}>
           {panier.map((item) => {
-            const stockDisponible = Number(item.quantite_stock) || 0;
-            const canIncrease = item.quantite < stockDisponible;
+            const stockDisponible = Number(item.quantite_stock) ?? 0;
+            const canIncrease = (item.quantite || 0) < stockDisponible;
             return (
               <li key={item.id} className={styles.cartItem}>
                 <div className={styles.productInfo}>
@@ -81,13 +93,12 @@ export default function Panier() {
                   <div className={styles.productDetails}>
                     <h2 className={styles.productName}>{item.nom}</h2>
                     <p className={styles.price}>
-                      Prix unitaire : {Number(item.prix).toFixed(2)} €
+                      Prix unitaire : {(Number(item.prix) || 0).toFixed(2)} €
                     </p>
-                    {!item.quantite_en_sachet || item.quantite_en_sachet === 0
-                      ? `Sachet de ${Number(item.quantite_en_g)} g`
-                      : `Boite de ${Number(
-                          item.quantite_en_sachet
-                        )} infusions`}{" "}
+                    {item.quantite_en_sachet == null ||
+                    item.quantite_en_sachet === 0
+                      ? `Sachet de ${item.quantite_en_g ?? 0} g`
+                      : `Boite de ${item.quantite_en_sachet ?? 0} infusions`}
                   </div>
                 </div>
                 <div className={styles.quantityControl}>
@@ -98,7 +109,7 @@ export default function Panier() {
                   >
                     -
                   </button>
-                  <span className={styles.qtyValue}>{item.quantite}</span>
+                  <span className={styles.qtyValue}>{item.quantite ?? 0}</span>
                   <button
                     onClick={() => augmenterQuantite(item.id)}
                     aria-label={`Augmenter la quantité de ${item.nom}`}
@@ -109,7 +120,8 @@ export default function Panier() {
                   </button>
                 </div>
                 <div className={styles.subtotal}>
-                  {(Number(item.prix) * item.quantite).toFixed(2)} €
+                  {((Number(item.prix) || 0) * (item.quantite || 0)).toFixed(2)}{" "}
+                  €
                 </div>
                 <button
                   onClick={() => supprimerProduit(item.id)}
@@ -123,16 +135,16 @@ export default function Panier() {
           })}
         </ul>
       </section>
-
       {/* colonne droite - récapitulatif */}
       <aside className={styles.summaryColumn}>
         <h2 className={styles.summaryTitle}>Récapitulatif</h2>
         <div className={styles.summaryBlock}>
           <div className={styles.summaryRow}>
             <span>
-              Sous-total ({panier.reduce((acc, elt) => acc + elt.quantite, 0)}{" "}
+              Sous-total (
+              {panier.reduce((acc, elt) => acc + (elt.quantite || 0), 0)}{" "}
               article
-              {panier.reduce((acc, elt) => acc + elt.quantite, 0) > 1
+              {panier.reduce((acc, elt) => acc + (elt.quantite || 0), 0) > 1
                 ? "s"
                 : ""}
               )
@@ -148,7 +160,7 @@ export default function Panier() {
           <span className={styles.totalLabel}>Total estimé</span>
           <span className={styles.totalValue}>{total.toFixed(2)}€</span>
         </div>
-        <button className={styles.commanderBtn}>
+        <button className={styles.commanderBtn} onClick={handleCommander}>
           COMMANDER | {total.toFixed(2)} €
         </button>
         <div className={styles.paymentIcons}>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../css/Connexion.css";
 import logo from "../images/logo-rituels_d_ebene.jpg";
 import config from "../config.js";
@@ -10,11 +10,13 @@ const Connexion = () => {
   const [mdp, setMdp] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const redirectFrom = params.get("from");
 
-  // Fonction interne pour synchroniser le panier local avec base
+  // Fonction pour synchroniser le panier local avec la base
   async function syncCartToBackend(userId, token) {
     const panierLocal = JSON.parse(localStorage.getItem("panier")) || [];
-
     try {
       const response = await fetch(`${config.apiUrl}/cart/sync`, {
         method: "POST",
@@ -24,9 +26,7 @@ const Connexion = () => {
         },
         body: JSON.stringify({ panier: panierLocal, email }),
       });
-
       if (!response.ok) throw new Error("Erreur synchronisation panier");
-
       const data = await response.json();
       localStorage.setItem("panier", JSON.stringify(data.panier));
     } catch (error) {
@@ -37,45 +37,36 @@ const Connexion = () => {
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
-
     try {
       const response = await fetch(`${config.apiUrl}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, mdp }),
       });
-
       if (!response.ok) {
         const err = await response.json();
         setMessage(err.message || "Erreur lors de la connexion");
         return;
       }
-
       const data = await response.json();
-      console.log("Réponse login:", data.userId);
-
       if (!data.role || !data.token || !data.userId) {
         setMessage("Réponse serveur invalide");
         return;
       }
-
-      // Stocke token et rôle dans localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-
-      // Synchronisation du panier local avec la base
       await syncCartToBackend(data.userId, data.token);
 
-      // Redirection selon le rôle
       const roleNormalized = data.role.trim().toLowerCase();
-
       if (roleNormalized === "admin") {
-        navigate("/manage-portal"); // Page d'administration
+        navigate("/manage-portal");
       } else if (roleNormalized === "client") {
-        navigate("/"); // Page d'accueil pour les clients
+        if (redirectFrom === "checkout") {
+          navigate("/checkout");
+        } else {
+          navigate("/");
+        }
       } else {
-        // Pour tout autre rôle non reconnu, redirection vers l'accueil
-        console.warn("Rôle non reconnu:", data.role);
         navigate("/");
       }
     } catch (error) {
@@ -88,7 +79,6 @@ const Connexion = () => {
     <div className="connexion-container">
       <img src={logo} alt="Logo" className="logo" />
       <h1 className="connexion-title">Connexion</h1>
-
       <form onSubmit={handleSubmitForm}>
         <div>
           <label htmlFor="email" className="connexion-label">
@@ -103,7 +93,6 @@ const Connexion = () => {
             className="connexion-input"
           />
         </div>
-
         <div>
           <label htmlFor="mdp" className="connexion-label">
             Mot de passe
@@ -117,14 +106,11 @@ const Connexion = () => {
             className="connexion-input"
           />
         </div>
-
         <button type="submit" className="connexion-button">
           Valider
         </button>
       </form>
-
       {message && <p className="connexion-message">{message}</p>}
-
       <div className="create-account-container">
         <p className="new-client-text">Nouveau client ?</p>
         <button

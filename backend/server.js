@@ -753,7 +753,9 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
 
     // Renvoie l'état final du panier
     const [updatedCart] = await connection.execute(
-      `SELECT c.id_produit AS id, c.quantite, p.nom_produit AS nom, uv.prix, uv.quantite_stock, p.image FROM cart c JOIN produit p ON c.id_produit = p.id JOIN unite_vente uv ON uv.id_produit = p.id
+      `SELECT c.id_produit AS id, c.quantite, p.nom_produit AS nom, uv.prix, uv.quantite_stock, p.image, uv.quantite_en_g, uv.quantite_en_sachet 
+      FROM cart c JOIN produit p 
+      ON c.id_produit = p.id JOIN unite_vente uv ON uv.id_produit = p.id
    WHERE c.id_utilisateur = ?`,
       [user.id]
     );

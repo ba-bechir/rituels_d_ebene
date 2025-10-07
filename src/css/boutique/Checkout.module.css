@@ -1,0 +1,322 @@
+.checkoutContainer {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  background: #d1ac7a;
+  padding: 40px 0 60px 0;
+  min-height: 90vh;
+}
+
+/* Colonne Formulaire */
+.leftColumn {
+  background: #fff;
+  padding: 32px 24px 32px 24px;
+  border-radius: 8px;
+  width: 440px;
+  box-shadow: 0 4px 16px rgba(100, 100, 100, 0.05);
+  margin-right: 0px;
+}
+
+.leftColumn h2 {
+  font-size: 1.18rem;
+  margin-bottom: 18px;
+  font-weight: bold;
+}
+
+.formRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.inputHalf {
+  width: 50%;
+  padding: 9px;
+  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.inputFull {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 9px;
+  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.inputTel {
+  flex: 1;
+  padding: 9px;
+  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.telCountry {
+  width: 60px;
+  margin-right: 8px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 40px;
+  resize: vertical;
+  padding: 9px;
+  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+
+.checkboxRow {
+  margin: 20px 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#facturation {
+  accent-color: #191919;
+}
+
+.payerBtn {
+  margin-top: 18px;
+  width: 100%;
+  background: #ededed;
+  color: #303030;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 0;
+  font-weight: bold;
+  font-size: 1.08rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payerBtn:hover {
+  background: #bfa16d;
+  color: #fff;
+}
+
+/* Colonne récapitulatif */
+.rightColumn {
+  width: 370px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(100, 100, 100, 0.06);
+  padding: 24px;
+  min-height: 340px;
+}
+
+.rightColumn h3 {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+
+.resumeItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  font-size: 0.97rem;
+  margin-bottom: 16px;
+  min-height: 45px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 7px;
+}
+
+.resumeItem img {
+  border-radius: 5px;
+  background: #eee;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}
+
+.summaryTotals {
+  margin-top: 12px;
+  font-size: 1.02rem;
+}
+
+.summaryTotals > div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.totalLine {
+  margin-top: 12px;
+  font-size: 1.12rem;
+  font-weight: bold;
+  border-top: 1px solid #e7e7e7;
+  padding-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .checkoutContainer {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+    padding: 10px 0;
+  }
+  .leftColumn,
+  .rightColumn {
+    width: 100%;
+    margin: 0;
+  }
+  .rightColumn {
+    margin-top: 22px;
+    padding: 18px;
+  }
+}
+
+:global(.react-phone-number-input) {
+  border: 1px solid #cccccc !important;
+  border-radius: 4px !important;
+  background: #fafafa !important;
+  height: 38px !important;
+  padding: 0 0 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 14px !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s !important;
+}
+
+:global(.react-phone-number-input:focus-within) {
+  border-color: #bfa16d !important;
+  box-shadow: 0 0 5px rgba(191, 161, 109, 0.18) !important;
+}
+
+:global(.react-phone-number-input__input) {
+  font-size: 1rem !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  outline: none !important;
+  padding: 9px 0 !important;
+  color: #232323 !important;
+  height: 36px !important;
+}
+
+:global(.react-phone-number-input__country-select) {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin-right: 8px !important;
+  appearance: none !important;
+  font-size: 1rem !important;
+}
+
+:global(.react-phone-number-input__icon) {
+  margin-left: 8px !important;
+  margin-right: 6px !important;
+  vertical-align: middle !important;
+}
+
+:global(.react-phone-number-input__input::placeholder) {
+  color: #aaa !important;
+}
+
+.toggleBtn {
+  display: block;
+  width: 100%;
+  margin: 18px 0;
+  padding: 10px 0;
+  font-size: 1rem;
+  border-radius: 6px;
+  background: #ededed;
+  color: #191919;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.toggleBtn.active,
+.toggleBtn:hover {
+  background: #bfa16d;
+  color: #fff;
+}
+.facturationSection {
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px 14px 4px 14px;
+  margin-bottom: 18px;
+  margin-top: 0px;
+  box-shadow: 0 4px 16px rgba(191, 161, 109, 0.06);
+}
+.formTitle {
+  font-size: 1.12rem;
+  font-weight: bold;
+  margin-bottom: 13px;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  margin: 18px 0 14px 0;
+  gap: 13px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #c5c5c5;
+  border-radius: 34px;
+  transition: 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  left: 4px;
+  top: 4px;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background-color: #bfa16d;
+}
+.switch input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+.switchLabel {
+  font-size: 1.12rem;
+  color: #191919;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  user-select: none;
+  cursor: pointer;
+}
