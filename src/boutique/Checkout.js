@@ -37,7 +37,6 @@ const Checkout = () => {
   const [showFacturation, setShowFacturation] = useState(false);
 
   const [panier, setPanier] = useState([]);
-  const [fraisPort, setFraisPort] = useState(4.5);
 
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
@@ -48,7 +47,6 @@ const Checkout = () => {
     (sum, item) => sum + (Number(item.prix) || 0) * (item.quantite || 0),
     0
   );
-  const total = totalProduits + fraisPort;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -297,12 +295,12 @@ const Checkout = () => {
             <span>{totalProduits.toFixed(2)}€</span>
           </div>
           <div>
-            <span>Frais de port estimés</span>
-            <span>{fraisPort.toFixed(2)}€</span>
+            <span>Frais de port </span>
+            <span>Calculé à l’étape suivante</span>
           </div>
           <div className={styles.totalLine}>
             <span>Total</span>
-            <span>{total.toFixed(2)}€</span>
+            <span>{totalProduits.toFixed(2)}€</span>
           </div>
         </div>
       </aside>
