@@ -148,9 +148,13 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
     const validPassword = await bcrypt.compare(mdp, user.mdp);
     if (!validPassword)
       return res.status(401).json({ message: "Identifiants invalides" });
-    const token = jwt.sign({ email: user.email, role: user.role }, SECRET_JWT, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      SECRET_JWT,
+      {
+        expiresIn: "1h",
+      }
+    );
     res.json({ token, role: user.role, userId: user.id });
     console.log(user.id);
   } catch (err) {
@@ -672,7 +676,6 @@ app.get(`${BASE_PATH}/produit/:id`, async (req, res) => {
 
 app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
   try {
-    const userId = req.user.id;
     const localCart = Array.isArray(req.body.panier) ? req.body.panier : [];
     const connection = await getConnection();
     const { email } = req.body;
@@ -772,6 +775,125 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
     res
       .status(500)
       .json({ message: "Erreur serveur lors de la synchronisation du panier" });
+  }
+});
+
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Token manquant" });
+
+  const token = authHeader.split(" ")[1]; // "Bearer <token>"
+  if (!token) return res.status(401).json({ error: "Token manquant" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_JWT);
+    req.user = decoded; // Contient userId ou d’autres infos
+    console.log("req.user:", req.user); // <- Ici
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Token invalide" });
+  }
+}
+
+function cleanParams(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [
+      k,
+      v === undefined || v === null ? "" : v,
+    ])
+  );
+}
+
+app.post("/persist-adresses", authMiddleware, async (req, res) => {
+  const { livraison, facturation, facturationIdentique } = req.body;
+  const userId = req.user.id;
+  const connection = await getConnection();
+
+  try {
+    // Nettoyer les objets reçus
+    const livrClean = cleanParams(livraison);
+
+    const { instructions, ...facturationSansInstructions } = facturation;
+    const factClean = cleanParams(facturationSansInstructions);
+
+    // Préparer params livr et fact
+    const paramsLivraison = [
+      livrClean.prenom,
+      livrClean.nom,
+      livrClean.adresse,
+      livrClean.complement,
+      livrClean.codePostal,
+      livrClean.ville,
+      livrClean.pays,
+      livrClean.telephone,
+      livrClean.instructions,
+    ];
+
+    const paramsFacturation = [
+      factClean.prenom,
+      factClean.nom,
+      factClean.adresse,
+      factClean.complement,
+      factClean.codePostal,
+      factClean.ville,
+      factClean.pays,
+      factClean.telephone,
+    ];
+
+    // Log complet des paramètres avec index et type
+    console.log("Params livraison:");
+    paramsLivraison.forEach((p, i) => console.log(`Index ${i}:`, p, typeof p));
+    console.log("Params facturation:");
+    paramsFacturation.forEach((p, i) =>
+      console.log(`Index ${i}:`, p, typeof p)
+    );
+
+    // Insertion Livraison
+    const [livraisonResult] = await connection.execute(
+      `INSERT INTO livraison (
+        prenom_livraison, nom_livraison, adresse_livraison, complement_adresse_livraison,
+        code_postal_livraison, ville_livraison, pays_livraison, telephone_livraison, instruction_livraison
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      paramsLivraison
+    );
+
+    // Insertion Facturation
+    const [facturationResult] = await connection.execute(
+      `INSERT INTO facturation (
+        prenom_facturation, nom_facturation, adresse_facturation, complement_adresse_facturation,
+        code_postal_facturation, ville_facturation, pays_facturation, telephone_facturation
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      paramsFacturation
+    );
+
+    // Mise à jour utilisateur
+    console.log(
+      "Update utilisateur avec ids :",
+      facturationResult.insertId,
+      livraisonResult.insertId,
+      userId
+    );
+    const [updateResult] = await connection.execute(
+      `UPDATE utilisateur SET id_facturation = ?, id_livraison = ? WHERE id = ?`,
+      [facturationResult.insertId, livraisonResult.insertId, userId]
+    );
+    console.log("Update result:", updateResult);
+
+    // Vérifie updateResult.affectedRows; s’il est 0, aucune ligne n'a été mise à jour
+    if (updateResult.affectedRows === 0) {
+      console.warn("Aucune ligne utilisateur mise à jour - vérifie userId");
+    }
+
+    res.status(200).json({
+      success: true,
+      id_facturation: facturationResult.insertId,
+      id_livraison: livraisonResult.insertId,
+    });
+  } catch (error) {
+    console.error("Erreur dans /persist-adresses:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally {
+    if (connection) await connection.end();
   }
 });
 

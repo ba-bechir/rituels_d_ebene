@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "../css/boutique/Checkout.module.css";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import config from "../config.js";
 
 const CustomInput = (props) => <input {...props} className={styles.inputTel} />;
 
@@ -17,7 +18,7 @@ const Checkout = () => {
     ville: "",
     instructions: "",
   });
-  const [phone, setPhone] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [country, setCountry] = useState("FR");
 
   // Facturation
@@ -30,7 +31,7 @@ const Checkout = () => {
     codePostal: "",
     ville: "",
   });
-  const [phoneFact, setPhoneFact] = useState("");
+  const [telephoneFact, setTelephoneFact] = useState("");
   const [countryFact, setCountryFact] = useState("FR");
 
   // Toggle bouton (facturation différente)
@@ -64,9 +65,37 @@ const Checkout = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Ajoute ici ta logique de validation et d'enregistrement
+
+    const livraisonData = { ...form, telephone: telephone };
+    // Si toggle désactivé => adresses identiques, sinon formulaire facturation
+    const facturationData = showFacturation
+      ? { ...formFact, telephone: telephoneFact }
+      : { ...form, telephone: telephone };
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${config.apiUrl}/persist-adresses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          livraison: livraisonData,
+          facturation: facturationData,
+          facturationIdentique: !showFacturation,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de l'enregistrement.");
+      // Redirige ou montre message de succès selon logique métier ici
+      alert("Adresses enregistrées.");
+    } catch (err) {
+      alert("Erreur lors de la sauvegarde : " + err.message);
+    }
   };
 
   return (
@@ -142,8 +171,8 @@ const Checkout = () => {
           <PhoneInput
             international
             defaultCountry={country}
-            value={phone}
-            onChange={setPhone}
+            value={telephone}
+            onChange={setTelephone}
             onCountryChange={setCountry}
             inputComponent={CustomInput}
             placeholder="Numéro de téléphone*"
@@ -161,7 +190,6 @@ const Checkout = () => {
             className={styles.textarea}
           />
         </div>
-        {/* Toggle button for facturation */}
         <div className={styles.toggleRow}>
           <label className={styles.switch}>
             <input
@@ -175,8 +203,6 @@ const Checkout = () => {
             Adresse de facturation identique
           </span>
         </div>
-
-        {/* Second formulaire si activé */}
         {showFacturation && (
           <div className={styles.facturationSection}>
             <h3 className={styles.formTitle}>Adresse de facturation</h3>
@@ -249,8 +275,8 @@ const Checkout = () => {
               <PhoneInput
                 international
                 defaultCountry={countryFact}
-                value={phoneFact}
-                onChange={setPhoneFact}
+                value={telephoneFact}
+                onChange={setTelephoneFact}
                 onCountryChange={setCountryFact}
                 inputComponent={CustomInput}
                 placeholder="Numéro de téléphone*"
