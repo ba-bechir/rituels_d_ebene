@@ -810,84 +810,105 @@ app.post("/persist-adresses", authMiddleware, async (req, res) => {
   const connection = await getConnection();
 
   try {
-    // Nettoyer les objets reçus
+    // Nettoyer données reçues
     const livrClean = cleanParams(livraison);
-
     const { instructions, ...facturationSansInstructions } = facturation;
     const factClean = cleanParams(facturationSansInstructions);
 
-    // Préparer params livr et fact
-    const paramsLivraison = [
-      livrClean.prenom,
-      livrClean.nom,
-      livrClean.adresse,
-      livrClean.complement,
-      livrClean.codePostal,
-      livrClean.ville,
-      livrClean.pays,
-      livrClean.telephone,
-      livrClean.instructions,
-    ];
-
-    const paramsFacturation = [
-      factClean.prenom,
-      factClean.nom,
-      factClean.adresse,
-      factClean.complement,
-      factClean.codePostal,
-      factClean.ville,
-      factClean.pays,
-      factClean.telephone,
-    ];
-
-    // Log complet des paramètres avec index et type
-    console.log("Params livraison:");
-    paramsLivraison.forEach((p, i) => console.log(`Index ${i}:`, p, typeof p));
-    console.log("Params facturation:");
-    paramsFacturation.forEach((p, i) =>
-      console.log(`Index ${i}:`, p, typeof p)
+    // Dédoublonnage livraison
+    const [livrRows] = await connection.execute(
+      `SELECT id FROM livraison WHERE
+        prenom_livraison = ? AND nom_livraison = ? AND adresse_livraison = ? AND complement_adresse_livraison = ? AND
+        code_postal_livraison = ? AND ville_livraison = ? AND pays_livraison = ? AND telephone_livraison = ? AND instruction_livraison = ?`,
+      [
+        livrClean.prenom,
+        livrClean.nom,
+        livrClean.adresse,
+        livrClean.complement,
+        livrClean.codePostal,
+        livrClean.ville,
+        livrClean.pays,
+        livrClean.telephone,
+        livrClean.instructions,
+      ]
     );
+    let id_livraison;
+    if (livrRows.length > 0) {
+      id_livraison = livrRows[0].id;
+    } else {
+      const [livraisonResult] = await connection.execute(
+        `INSERT INTO livraison (prenom_livraison, nom_livraison, adresse_livraison, complement_adresse_livraison,
+          code_postal_livraison, ville_livraison, pays_livraison, telephone_livraison, instruction_livraison)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          livrClean.prenom,
+          livrClean.nom,
+          livrClean.adresse,
+          livrClean.complement,
+          livrClean.codePostal,
+          livrClean.ville,
+          livrClean.pays,
+          livrClean.telephone,
+          livrClean.instructions,
+        ]
+      );
+      id_livraison = livraisonResult.insertId;
+    }
 
-    // Insertion Livraison
-    const [livraisonResult] = await connection.execute(
-      `INSERT INTO livraison (
-        prenom_livraison, nom_livraison, adresse_livraison, complement_adresse_livraison,
-        code_postal_livraison, ville_livraison, pays_livraison, telephone_livraison, instruction_livraison
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      paramsLivraison
+    // Dédoublonnage facturation
+    const [factRows] = await connection.execute(
+      `SELECT id FROM facturation WHERE
+        prenom_facturation = ? AND nom_facturation = ? AND adresse_facturation = ? AND complement_adresse_facturation = ? AND
+        code_postal_facturation = ? AND ville_facturation = ? AND pays_facturation = ? AND telephone_facturation = ?`,
+      [
+        factClean.prenom,
+        factClean.nom,
+        factClean.adresse,
+        factClean.complement,
+        factClean.codePostal,
+        factClean.ville,
+        factClean.pays,
+        factClean.telephone,
+      ]
     );
+    let id_facturation;
+    if (factRows.length > 0) {
+      id_facturation = factRows[0].id;
+    } else {
+      const [facturationResult] = await connection.execute(
+        `INSERT INTO facturation (prenom_facturation, nom_facturation, adresse_facturation, complement_adresse_facturation,
+          code_postal_facturation, ville_facturation, pays_facturation, telephone_facturation)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          factClean.prenom,
+          factClean.nom,
+          factClean.adresse,
+          factClean.complement,
+          factClean.codePostal,
+          factClean.ville,
+          factClean.pays,
+          factClean.telephone,
+        ]
+      );
+      id_facturation = facturationResult.insertId;
+    }
 
-    // Insertion Facturation
-    const [facturationResult] = await connection.execute(
-      `INSERT INTO facturation (
-        prenom_facturation, nom_facturation, adresse_facturation, complement_adresse_facturation,
-        code_postal_facturation, ville_facturation, pays_facturation, telephone_facturation
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      paramsFacturation
-    );
-
-    // Mise à jour utilisateur
-    console.log(
-      "Update utilisateur avec ids :",
-      facturationResult.insertId,
-      livraisonResult.insertId,
-      userId
-    );
+    // Mise à jour du panier (cart) de l'utilisateur courant (ajuste la cible si besoin !)
     const [updateResult] = await connection.execute(
-      `UPDATE utilisateur SET id_facturation = ?, id_livraison = ? WHERE id = ?`,
-      [facturationResult.insertId, livraisonResult.insertId, userId]
+      `UPDATE cart SET id_facturation = ?, id_livraison = ? WHERE id_utilisateur = ?`,
+      [id_facturation, id_livraison, userId]
     );
-    console.log("Update result:", updateResult);
 
-    // Vérifie updateResult.affectedRows; s’il est 0, aucune ligne n'a été mise à jour
     if (updateResult.affectedRows === 0) {
-      console.warn("Aucune ligne utilisateur mise à jour - vérifie userId");
+      console.warn(
+        "Aucune ligne cart mise à jour - vérifie la cible du panier en cours"
+      );
     }
 
     res.status(200).json({
       success: true,
-      id_facturation: facturationResult.insertId,
-      id_livraison: livraisonResult.insertId,
+      id_facturation,
+      id_livraison,
     });
   } catch (error) {
     console.error("Erreur dans /persist-adresses:", error);
