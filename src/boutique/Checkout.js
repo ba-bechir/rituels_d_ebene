@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../css/boutique/Checkout.module.css";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -64,9 +65,10 @@ const Checkout = () => {
       [name]: value,
     }));
   };
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
+    navigate("/payment");
 
     const livraisonData = { ...form, telephone: telephone };
     // Si toggle désactivé => adresses identiques, sinon formulaire facturation

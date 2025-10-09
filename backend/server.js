@@ -227,6 +227,42 @@ app.get(`${BASE_PATH}/categories`, authorizeRole("admin"), async (req, res) => {
   }
 });
 
+app.get(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(400).json({ error: "Utilisateur non authentifié" });
+    }
+
+    console.log("UserID:", userId);
+
+    const [rows] = await connection.execute(
+      `SELECT l.prenom_livraison, l.nom_livraison, l.adresse_livraison,
+              l.complement_adresse_livraison, l.code_postal_livraison, l.ville_livraison
+       FROM livraison l
+       JOIN cart c ON c.id_livraison = l.id
+       WHERE c.id_utilisateur = ?
+       ORDER BY c.updated_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Adresse de livraison non trouvée" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Erreur serveur :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // ------ Liste produits ------
 app.get(
   `${BASE_PATH}/liste-produits`,
@@ -780,6 +816,8 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
+  console.log("Authorization header received:", req.headers.authorization);
+
   if (!authHeader) return res.status(401).json({ error: "Token manquant" });
 
   const token = authHeader.split(" ")[1]; // "Bearer <token>"
@@ -805,7 +843,7 @@ function cleanParams(obj) {
 }
 
 app.post("/persist-adresses", authMiddleware, async (req, res) => {
-  const { livraison, facturation, facturationIdentique } = req.body;
+  const { livraison, facturation } = req.body;
   const userId = req.user.id;
   const connection = await getConnection();
 

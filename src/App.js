@@ -20,6 +20,7 @@ import Checkout from "./boutique/Checkout.js";
 import ProtectedRoute from "./ProtectedRoute.js";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Payment from "./boutique/Payment.js";
 
 function App() {
   const location = useLocation();
@@ -106,6 +107,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="client">
               <Checkout />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute requiredRole="client">
+              <Payment />
             </ProtectedRoute>
           }
         />
