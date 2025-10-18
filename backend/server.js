@@ -956,6 +956,22 @@ app.post("/persist-adresses", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/colissimo-tarif", async (req, res) => {
+  const poids = Number(req.query.poids); // poids en GRAMMES
+
+  const connection = await getConnection();
+  try {
+    const [rows] = await connection.execute(
+      "SELECT prix FROM colissimo_tarifs WHERE poids_max >= ? ORDER BY poids_max ASC LIMIT 1",
+      [poids]
+    );
+    if (rows.length === 0) return res.status(404).json({ prix: null });
+    res.json({ prix: rows[0].prix });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
 // ------ Start server ------
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, HOST, () => {

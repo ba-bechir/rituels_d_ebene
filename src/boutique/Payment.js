@@ -6,16 +6,15 @@ const Payment = () => {
   const [mode, setMode] = useState("domicile");
   const [sousMode, setSousMode] = useState("colissimo");
   const [adresseLivraison, setAdresseLivraison] = useState(null);
+  const [fraisPort, setFraisPort] = useState(null);
 
+  // Récupère le panier au montage
   useEffect(() => {
-    // Chargement des données panier depuis localStorage (comme dans PlantesBrutes)
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
     setPanier(panierStocke);
 
+    // Charge l'adresse de livraison
     const token = localStorage.getItem("token");
-    console.log("Token utilisé:", token);
-
-    // Chargement dynamique adresse de livraison via API
     const fetchAdresseLivraison = async () => {
       try {
         const res = await fetch(
@@ -34,6 +33,38 @@ const Payment = () => {
     };
     fetchAdresseLivraison();
   }, []);
+
+  // Calcul automatique du poids et fetch du tarif Colissimo (en base SQL)
+  useEffect(() => {
+    const nbArticles = panier.reduce(
+      (acc, item) => acc + Number(item.quantite || 1),
+      0
+    );
+    const poidsTotal = nbArticles > 0 ? 250 + (nbArticles - 1) * 50 : 0;
+
+    if (poidsTotal > 0 && mode === "domicile" && sousMode === "colissimo") {
+      fetch(
+        `${process.env.REACT_APP_API_URL}/colissimo-tarif?poids=${poidsTotal}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          // Convertir en nombre, gérer les cas invalides
+          const prix = Number(data.prix);
+          if (isNaN(prix)) {
+            setFraisPort(null);
+          } else {
+            setFraisPort(prix);
+          }
+        })
+        .catch(() => setFraisPort(null));
+    } else if (mode === "relais") {
+      setFraisPort(3.9); // fix ou venant aussi de la base
+    } else if (mode === "clickcollect") {
+      setFraisPort(0);
+    } else {
+      setFraisPort(null);
+    }
+  }, [panier, mode, sousMode]);
 
   const totalProduits = panier.reduce(
     (sum, item) => sum + (Number(item.prix) || 0) * (item.quantite || 0),
@@ -54,7 +85,6 @@ const Payment = () => {
         }}
       >
         <h4>Méthodes de livraison</h4>
-
         {/* Livraison à domicile */}
         <label
           className={styles.livraisonRadio}
@@ -68,9 +98,7 @@ const Payment = () => {
             onChange={() => setMode("domicile")}
             style={{ marginRight: 8 }}
           />
-          <span style={{ fontWeight: "bold", marginRight: 8 }}>
-            Livraison à domicile
-          </span>
+          <span style={{ marginRight: 8 }}>Livraison à domicile</span>
           <span className={styles.deliveryIcon}>🏠</span>
         </label>
         {mode === "domicile" && (
@@ -115,15 +143,10 @@ const Payment = () => {
                 <span style={{ marginLeft: 5 }}>
                   Colissimo (Livraison Standard)
                 </span>
-                <span style={{ marginLeft: 10 }}>4,50 €</span>
               </label>
-              <label
-                style={{ display: "flex", alignItems: "center", marginTop: 2 }}
-              ></label>
             </div>
           </div>
         )}
-
         {/* Retrait point relais */}
         <label
           className={styles.livraisonRadio}
@@ -143,28 +166,7 @@ const Payment = () => {
             🏪
           </span>
         </label>
-
-        {/* Click & Collect */}
-        <label
-          className={styles.livraisonRadio}
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          <input
-            type="radio"
-            name="mode"
-            value="clickcollect"
-            checked={mode === "clickcollect"}
-            onChange={() => setMode("clickcollect")}
-            style={{ marginRight: 8 }}
-          />
-          <span>Click & Collect (retrait en boutique)</span>
-          <span style={{ marginLeft: 7, color: "grey" }}>Gratuit</span>
-          <span className={styles.deliveryIcon} style={{ marginLeft: 8 }}>
-            🏬
-          </span>
-        </label>
       </section>
-
       {/* Récapitulatif commande à droite */}
       <aside className={styles.rightColumn}>
         <h3>Commande</h3>
@@ -198,11 +200,17 @@ const Payment = () => {
           </div>
           <div>
             <span>Frais de port </span>
-            <span>Calculé à l’étape suivante</span>
+            <span>
+              {typeof fraisPort === "number"
+                ? fraisPort.toFixed(2) + " €"
+                : "Calcul en cours..."}
+            </span>
           </div>
           <div className={styles.totalLine}>
             <span>Total</span>
-            <span>{totalProduits.toFixed(2)}€</span>
+            <span>
+              {(totalProduits + (Number(fraisPort) || 0)).toFixed(2)}€
+            </span>
           </div>
         </div>
       </aside>
