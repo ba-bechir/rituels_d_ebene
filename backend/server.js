@@ -3,13 +3,19 @@ import crypto from "crypto";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import axios from "axios";
+import fs from "fs";
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cors from "cors";
+import { XMLParser } from "fast-xml-parser";
+import soap from "soap";
+import util from "util";
 import multer from "multer";
 import { getConnection } from "./db.js";
 import config from "./config.js";
+import { data } from "react-router-dom";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +50,19 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const SECRET_JWT = process.env.SECRET_JWT;
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/api" : "";
 
-app.use(cors());
+const MR_API_WSDL_URL = "https://api.mondialrelay.com/Web_Services.asmx?WSDL";
+
+const MR_API_LOGIN = process.env.MR_API_LOGIN;
+const MR_API_PASSWORD = process.env.MR_API_PASSWORD;
+const MR_API_URL =
+  process.env.MR_API_URL || "https://connect-api.mondialrelay.com/api/shipment";
+
+const corsOptions = {
+  origin: FRONTEND_URL,
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 
 const storage = multer.memoryStorage();
@@ -257,6 +275,7 @@ app.get(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
     }
 
     res.json(rows[0]);
+    console.log(data);
   } catch (error) {
     console.error("Erreur serveur :", error);
     res.status(500).json({ error: "Erreur serveur" });
@@ -972,8 +991,67 @@ app.get("/colissimo-tarif", async (req, res) => {
   }
 });
 
+// Endpoint pour récupérer les points relais par code postal
+const MR_API_ENDPOINT = "https://api.mondialrelay.com/Web_Services.asmx";
+
+app.get("/mondialrelay-points-relais", async (req, res) => {
+  const { postcode } = req.query;
+  if (!postcode)
+    return res.status(400).json({ error: "Le code postal est requis" });
+
+  const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+      <WSI4_PointRelais_Recherche xmlns="http://www.mondialrelay.fr/webservice/">
+        <Enseigne>CC23O6TF</Enseigne>
+        <Pays>FR</Pays>
+        <CP>${postcode}</CP>
+        <NombreResultats>7</NombreResultats>
+      </WSI4_PointRelais_Recherche>
+    </soap:Body>
+  </soap:Envelope>`;
+
+  try {
+    const response = await axios.post(MR_API_ENDPOINT, soapEnvelope, {
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        SOAPAction:
+          "http://www.mondialrelay.fr/webservice/WSI4_PointRelais_Recherche",
+      },
+    });
+
+    const parser = new XMLParser();
+    const jsonObj = parser.parse(response.data);
+    console.log("Réponse XML brute reçue :", response.data);
+
+    // Accès à la liste des points relais (à adapter en fonction de la structure précise)
+    const pointsRelais =
+      jsonObj["soap:Envelope"]?.["soap:Body"]
+        ?.WSI4_PointRelais_RechercheResponse?.WSI4_PointRelais_RechercheResult
+        ?.PointsRelais?.PointRelais_Details || [];
+
+    // Normaliser en tableau
+    const liste = Array.isArray(pointsRelais)
+      ? pointsRelais
+      : pointsRelais
+      ? [pointsRelais]
+      : [];
+
+    res.json(liste);
+  } catch (error) {
+    console.error("Erreur appel SOAP manuel:", error.message || error);
+    res
+      .status(500)
+      .json({ error: "Erreur lors de l'appel SOAP manuel Mondial Relay" });
+  }
+});
+
 // ------ Start server ------
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, HOST, () => {
   console.log(`API démarrée sur http://${HOST}:${PORT}`);
 });
+
+process.env.NODE_DEBUG = "soap";

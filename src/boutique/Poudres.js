@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "../css/boutique/Product.module.css";
+import TestMondialRelayWidget from "./PlantesBrutes.js";
 
 export default function Poudres() {
   const [produits, setProduits] = useState([]);
