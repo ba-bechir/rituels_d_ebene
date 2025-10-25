@@ -282,6 +282,91 @@ app.get(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
   }
 });
 
+// PUT - Mettre à jour l'adresse de livraison
+app.put(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(400).json({ error: "Utilisateur non authentifié" });
+    }
+
+    const {
+      prenom_livraison,
+      nom_livraison,
+      adresse_livraison,
+      complement_adresse_livraison,
+      code_postal_livraison,
+      ville_livraison,
+    } = req.body;
+
+    // Validation des champs requis
+    if (
+      !prenom_livraison ||
+      !nom_livraison ||
+      !adresse_livraison ||
+      !code_postal_livraison ||
+      !ville_livraison
+    ) {
+      return res.status(400).json({ error: "Champs obligatoires manquants" });
+    }
+
+    // Validation du code postal (5 chiffres)
+    if (!/^\d{5}$/.test(code_postal_livraison)) {
+      return res.status(400).json({ error: "Code postal invalide" });
+    }
+
+    // Récupérer l'id_livraison actuel du panier de l'utilisateur
+    const [cartRows] = await connection.execute(
+      `SELECT id_livraison FROM cart WHERE id_utilisateur = ? ORDER BY updated_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (cartRows.length === 0) {
+      return res.status(404).json({ error: "Panier non trouvé" });
+    }
+
+    const idLivraison = cartRows[0].id_livraison;
+
+    // Mettre à jour l'adresse de livraison
+    await connection.execute(
+      `UPDATE livraison 
+       SET prenom_livraison = ?,
+           nom_livraison = ?,
+           adresse_livraison = ?,
+           complement_adresse_livraison = ?,
+           code_postal_livraison = ?,
+           ville_livraison = ?
+       WHERE id = ?`,
+      [
+        prenom_livraison,
+        nom_livraison,
+        adresse_livraison,
+        complement_adresse_livraison || null,
+        code_postal_livraison,
+        ville_livraison,
+        idLivraison,
+      ]
+    );
+
+    // Retourner l'adresse mise à jour
+    const [updatedRows] = await connection.execute(
+      `SELECT prenom_livraison, nom_livraison, adresse_livraison,
+              complement_adresse_livraison, code_postal_livraison, ville_livraison
+       FROM livraison
+       WHERE id = ?`,
+      [idLivraison]
+    );
+
+    res.json(updatedRows[0]);
+  } catch (error) {
+    console.error("Erreur mise à jour adresse :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // ------ Liste produits ------
 app.get(
   `${BASE_PATH}/liste-produits`,

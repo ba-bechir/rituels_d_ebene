@@ -21,6 +21,7 @@ import ProtectedRoute from "./ProtectedRoute.js";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Payment from "./boutique/Payment.js";
+import "leaflet/dist/leaflet.css";
 
 function App() {
   const location = useLocation();
