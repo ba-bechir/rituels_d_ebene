@@ -3,6 +3,11 @@ import styles from "../css/boutique/Checkout.module.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useMapEvent } from "react-leaflet";
 import L from "leaflet";
+import PaymentForm from "../components/PaymentForm.js";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe("pk_test_taClePubliqueStripe"); // Ta clé publique
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -403,7 +408,10 @@ const Payment = () => {
       (acc, item) => acc + Number(item.quantite || 1),
       0
     );
-    const poidsTotal = nbArticles > 0 ? 250 + (nbArticles - 1) * 50 : 0;
+    let poidsTotal = 0;
+    if (nbArticles > 0) {
+      poidsTotal = 250 + Math.max(0, nbArticles - 2) * 50;
+    }
     if (poidsTotal > 0 && mode === "domicile" && sousMode === "colissimo") {
       fetch(
         `${process.env.REACT_APP_API_URL}/colissimo-tarif?poids=${poidsTotal}`
@@ -596,6 +604,23 @@ const Payment = () => {
           />
         )}
       </section>
+
+      <div
+        className={styles.deliverySection}
+        style={{
+          maxWidth: 420,
+          border: "1px solid #eaeaea",
+          background: "#fafafa",
+          padding: 16,
+          borderRadius: 8,
+          marginBottom: 32,
+        }}
+      >
+        <Elements stripe={stripePromise}>
+          <PaymentForm onPayment={() => alert("Paiement effectué !")} />
+        </Elements>
+      </div>
+
       <aside className={styles.rightColumn}>
         <h3>Commande</h3>
         {panier.map((item) => (

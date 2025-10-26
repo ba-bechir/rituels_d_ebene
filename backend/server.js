@@ -12,6 +12,7 @@ import cors from "cors";
 import { XMLParser } from "fast-xml-parser";
 import soap from "soap";
 import util from "util";
+import Stripe from "stripe";
 import multer from "multer";
 import { getConnection } from "./db.js";
 import config from "./config.js";
@@ -49,6 +50,7 @@ const app = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const SECRET_JWT = process.env.SECRET_JWT;
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/api" : "";
+//const stripe = require("stripe")("sk_test_tonSecretStripe");
 
 const MR_API_WSDL_URL = "https://api.mondialrelay.com/Web_Services.asmx?WSDL";
 
@@ -174,7 +176,6 @@ app.post(`${BASE_PATH}/login`, async (req, res) => {
       }
     );
     res.json({ token, role: user.role, userId: user.id });
-    console.log(user.id);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur" });
@@ -255,8 +256,6 @@ app.get(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Utilisateur non authentifié" });
     }
 
-    console.log("UserID:", userId);
-
     const [rows] = await connection.execute(
       `SELECT l.prenom_livraison, l.nom_livraison, l.adresse_livraison,
               l.complement_adresse_livraison, l.code_postal_livraison, l.ville_livraison
@@ -275,7 +274,6 @@ app.get(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
     }
 
     res.json(rows[0]);
-    console.log(data);
   } catch (error) {
     console.error("Erreur serveur :", error);
     res.status(500).json({ error: "Erreur serveur" });
@@ -366,6 +364,133 @@ app.put(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+app.get(
+  `${BASE_PATH}/adresse-facturation`,
+  authMiddleware,
+  async (req, res) => {
+    let connection;
+    try {
+      connection = await getConnection();
+
+      const userId = req.user?.id || req.user?.userId;
+      if (!userId) {
+        return res.status(400).json({ error: "Utilisateur non authentifié" });
+      }
+
+      const [rows] = await connection.execute(
+        `SELECT f.prenom_facturation, f.nom_facturation, f.adresse_facturation,
+              f.complement_adresse_facturation, f.code_postal_facturation, f.ville_facturation
+       FROM facturation f
+       JOIN cart c ON c.id_livraison = f.id
+       WHERE c.id_utilisateur = ?
+       ORDER BY c.updated_at DESC
+       LIMIT 1`,
+        [userId]
+      );
+
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Adresse de livraison non trouvée" });
+      }
+
+      res.json(rows[0]);
+    } catch (error) {
+      console.error("Erreur serveur :", error);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  }
+);
+
+// PUT - Mettre à jour l'adresse de facturation
+app.put(
+  `${BASE_PATH}/adresse-facturation`,
+  authMiddleware,
+  async (req, res) => {
+    let connection;
+    try {
+      connection = await getConnection();
+
+      const userId = req.user?.id || req.user?.userId;
+      if (!userId) {
+        return res.status(400).json({ error: "Utilisateur non authentifié" });
+      }
+
+      const {
+        prenom_facturation,
+        nom_facturation,
+        adresse_facturation,
+        complement_adresse_facturation,
+        code_postal_facturation,
+        ville_facturation,
+      } = req.body;
+
+      // Validation des champs requis
+      if (
+        !prenom_facturation ||
+        !nom_facturation ||
+        !adresse_facturation ||
+        !code_postal_facturation ||
+        !ville_facturation
+      ) {
+        return res.status(400).json({ error: "Champs obligatoires manquants" });
+      }
+
+      // Validation du code postal (5 chiffres)
+      if (!/^\d{5}$/.test(code_postal_facturation)) {
+        return res.status(400).json({ error: "Code postal invalide" });
+      }
+
+      // Récupérer l'id_livraison actuel du panier de l'utilisateur
+      const [cartRows] = await connection.execute(
+        `SELECT id_facturation FROM cart WHERE id_utilisateur = ? ORDER BY updated_at DESC LIMIT 1`,
+        [userId]
+      );
+
+      if (cartRows.length === 0) {
+        return res.status(404).json({ error: "Panier non trouvé" });
+      }
+
+      const idFacturation = cartRows[0].id_facturation;
+
+      // Mettre à jour l'adresse de livraison
+      await connection.execute(
+        `UPDATE facturation 
+       SET prenom_facturation = ?,
+           nom_facturation = ?,
+           adresse_facturation = ?,
+           complement_adresse_facturation = ?,
+           code_postal_facturation = ?,
+           ville_facturation = ?
+       WHERE id = ?`,
+        [
+          prenom_facturation,
+          nom_facturation,
+          adresse_facturation,
+          complement_adresse_facturation || null,
+          code_postal_facturation,
+          ville_facturation,
+          idFacturation,
+        ]
+      );
+
+      // Retourner l'adresse mise à jour
+      const [updatedRows] = await connection.execute(
+        `SELECT prenom_facturation, nom_facturation, adresse_facturation,
+              complement_adresse_facturation, code_postal_facturation, ville_facturation
+       FROM facturation
+       WHERE id = ?`,
+        [idFacturation]
+      );
+
+      res.json(updatedRows[0]);
+    } catch (error) {
+      console.error("Erreur mise à jour adresse :", error);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  }
+);
 
 // ------ Liste produits ------
 app.get(
@@ -902,7 +1027,6 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
    WHERE c.id_utilisateur = ?`,
       [user.id]
     );
-    console.log("Cart synchronisé final :", updatedCart);
 
     const formatedCart = updatedCart.map((item) => ({
       ...item,
@@ -920,7 +1044,6 @@ app.post("/cart/sync", authorizeRole("client"), async (req, res) => {
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
-  console.log("Authorization header received:", req.headers.authorization);
 
   if (!authHeader) return res.status(401).json({ error: "Token manquant" });
 
@@ -930,7 +1053,7 @@ function authMiddleware(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.SECRET_JWT);
     req.user = decoded; // Contient userId ou d’autres infos
-    console.log("req.user:", req.user); // <- Ici
+
     next();
   } catch (err) {
     res.status(401).json({ error: "Token invalide" });
@@ -1109,7 +1232,6 @@ app.get("/mondialrelay-points-relais", async (req, res) => {
 
     const parser = new XMLParser();
     const jsonObj = parser.parse(response.data);
-    console.log("Réponse XML brute reçue :", response.data);
 
     // Accès à la liste des points relais (à adapter en fonction de la structure précise)
     const pointsRelais =
@@ -1130,6 +1252,22 @@ app.get("/mondialrelay-points-relais", async (req, res) => {
     res
       .status(500)
       .json({ error: "Erreur lors de l'appel SOAP manuel Mondial Relay" });
+  }
+});
+
+app.post("/create-payment-intent", async (req, res) => {
+  const { amount } = req.body; // montant en centimes
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "eur",
+      // autres options (description, metadata, etc.)
+    });
+
+    res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
   }
 });
 
