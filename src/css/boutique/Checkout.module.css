@@ -1,11 +1,9 @@
 .checkoutContainer {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  align-items: flex-start; /* C'EST ESSENTIEL */
   gap: 40px;
-  background: #d1ac7a;
-  padding: 40px 0 60px 0;
-  min-height: 90vh;
+  padding: 40px;
+  justify-content: center;
 }
 
 /* Colonne Formulaire */
@@ -86,6 +84,16 @@
 
 #facturation {
   accent-color: #191919;
+}
+
+.paymentColumn {
+  width: 420px;
+
+  box-shadow: 0 4px 16px rgba(100, 100, 100, 0.06);
+  padding: 24px;
+  min-height: 340px;
+  /* CRUCIAL: pas de margin-top ni bottom */
+  margin-top: 0;
 }
 
 .payerBtn {

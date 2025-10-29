@@ -50,7 +50,7 @@ const app = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const SECRET_JWT = process.env.SECRET_JWT;
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/api" : "";
-//const stripe = require("stripe")("sk_test_tonSecretStripe");
+const stripe = new Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY); //A changer pour la prod
 
 const MR_API_WSDL_URL = "https://api.mondialrelay.com/Web_Services.asmx?WSDL";
 
@@ -1256,18 +1256,19 @@ app.get("/mondialrelay-points-relais", async (req, res) => {
 });
 
 app.post("/create-payment-intent", async (req, res) => {
-  const { amount } = req.body; // montant en centimes
-
   try {
+    const { amount } = req.body;
+    // Validation minimum
+    if (!amount || typeof amount !== "number")
+      return res.status(400).json({ error: "Montant invalide" });
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "eur",
-      // autres options (description, metadata, etc.)
     });
-
-    res.send({ clientSecret: paymentIntent.client_secret });
+    res.json({ client_secret: paymentIntent.client_secret });
   } catch (err) {
-    res.status(500).send({ error: err.message });
+    console.error("Erreur Stripe:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 

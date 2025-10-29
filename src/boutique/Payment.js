@@ -7,7 +7,7 @@ import PaymentForm from "../components/PaymentForm.js";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe("pk_test_taClePubliqueStripe"); // Ta clé publique
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY); // Ta clé publique. A changer pour la prod
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -379,6 +379,9 @@ const Payment = () => {
   const [showRelaySelector, setShowRelaySelector] = useState(false);
   const [showAddressEditor, setShowAddressEditor] = useState(false);
 
+  // State clientSecret Stripe
+  const [clientSecret, setClientSecret] = useState("");
+
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
     setPanier(panierStocke);
@@ -430,6 +433,40 @@ const Payment = () => {
       setFraisPort(null);
     }
   }, [panier, mode, sousMode]);
+
+  // Création du PaymentIntent avec récupération du client_secret
+  useEffect(() => {
+    async function createPaymentIntent() {
+      const totalProduits = panier.reduce(
+        (sum, item) => sum + (Number(item.prix) || 0) * (item.quantite || 0),
+        0
+      );
+      const total = Number(
+        (totalProduits + (Number(fraisPort) || 0)).toFixed(2)
+      );
+      if (total <= 0) {
+        setClientSecret("");
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/create-payment-intent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: Math.round(total * 100) }),
+          }
+        );
+        const data = await response.json();
+        setClientSecret(data.client_secret); // Assure-toi que le backend renvoie "client_secret"
+        console.log(clientSecret);
+      } catch (error) {
+        console.error("Erreur création PaymentIntent :", error);
+        setClientSecret("");
+      }
+    }
+    createPaymentIntent();
+  }, [panier, fraisPort]);
 
   const handleSaveAddress = async (newAddress) => {
     const token = localStorage.getItem("token");
@@ -605,70 +642,78 @@ const Payment = () => {
         )}
       </section>
 
-      <div
-        className={styles.deliverySection}
-        style={{
-          maxWidth: 420,
-          border: "1px solid #eaeaea",
-          background: "#fafafa",
-          padding: 16,
-          borderRadius: 8,
-          marginBottom: 32,
-        }}
-      >
-        <Elements stripe={stripePromise}>
-          <PaymentForm onPayment={() => alert("Paiement effectué !")} />
-        </Elements>
-      </div>
-
-      <aside className={styles.rightColumn}>
-        <h3>Commande</h3>
-        {panier.map((item) => (
-          <div key={item.id} className={styles.resumeItem}>
-            <img
-              src={`data:image/jpeg;base64,${item.image}`}
-              alt={item.nom}
-              width={40}
-              height={40}
-            />
-            <div>
-              <div>{item.nom}</div>
+      <div className={styles.deliverySection}>
+        <aside className={styles.rightColumn}>
+          <h3>Commande</h3>
+          {panier.map((item) => (
+            <div key={item.id} className={styles.resumeItem}>
+              <img
+                src={`data:image/jpeg;base64,${item.image}`}
+                alt={item.nom}
+                width={40}
+                height={40}
+              />
               <div>
-                Format&nbsp;:{" "}
-                {item.quantite_en_sachet == null ||
-                item.quantite_en_sachet === 0
-                  ? `Sachet de ${item.quantite_en_g ?? 0} g`
-                  : `Boîte de ${item.quantite_en_sachet ?? 0} infusions`}
-              </div>
-              <div>
-                x{item.quantite} — {(Number(item.prix) || 0).toFixed(2)} €
+                <div>{item.nom}</div>
+                <div>
+                  Format&nbsp;:{" "}
+                  {item.quantite_en_sachet == null ||
+                  item.quantite_en_sachet === 0
+                    ? `Sachet de ${item.quantite_en_g ?? 0} g`
+                    : `Boîte de ${item.quantite_en_sachet ?? 0} infusions`}
+                </div>
+                <div>
+                  x{item.quantite} — {(Number(item.prix) || 0).toFixed(2)} €
+                </div>
               </div>
             </div>
+          ))}
+          <div className={styles.summaryTotals}>
+            <div>
+              <span>Sous-total</span>
+              <span>{totalProduits.toFixed(2)}€</span>
+            </div>
+            <div>
+              <span>Frais de port</span>
+              <span>
+                {typeof fraisPort === "number"
+                  ? fraisPort.toFixed(2) + " €"
+                  : "Calcul en cours..."}
+              </span>
+            </div>
+            <div className={styles.totalLine}>
+              <span>Total</span>
+              <span>
+                {(totalProduits + (Number(fraisPort) || 0)).toFixed(2)}€
+              </span>
+            </div>
           </div>
-        ))}
-        <div className={styles.summaryTotals}>
-          <div>
-            <span>Sous-total</span>
-            <span>{totalProduits.toFixed(2)}€</span>
-          </div>
-          <div>
-            <span>Frais de port</span>
-            <span>
-              {typeof fraisPort === "number"
-                ? fraisPort.toFixed(2) + " €"
-                : "Calcul en cours..."}
-            </span>
-          </div>
-          <div className={styles.totalLine}>
-            <span>Total</span>
-            <span>
-              {(totalProduits + (Number(fraisPort) || 0)).toFixed(2)}€
-            </span>
-          </div>
-        </div>
+        </aside>
+      </div>
+      <aside
+        className={styles.paymentColumn}
+        style={{
+          width: 420,
+          borderRadius: 8,
+          boxShadow: "0 4px 16px rgba(100, 100, 100, 0.06)",
+          padding: 24,
+          marginTop: -55,
+          minHeight: 340,
+        }}
+      >
+        {!clientSecret ? (
+          <p>Chargement du paiement...</p>
+        ) : (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <PaymentForm onPaymentSuccess={() => alert("Paiement réussi !")} />
+          </Elements>
+        )}
       </aside>
     </div>
   );
 };
+
+//Enlever le stock en base
+//MàJ paye à 1
 
 export default Payment;
