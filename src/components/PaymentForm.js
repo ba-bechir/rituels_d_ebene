@@ -91,7 +91,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: "https://ton-site.com/confirmation", // Modifier selon ton URL de succès
+          return_url: process.env.REACT_APP_CONFIRM_URL,
         },
         // redirect: "if_required" par défaut
       });

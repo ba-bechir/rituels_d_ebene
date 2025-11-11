@@ -51,6 +51,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const SECRET_JWT = process.env.SECRET_JWT;
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/api" : "";
 const stripe = new Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY); //A changer pour la prod
+const enseigne = process.env.REACT_APP_MR_API_BRAND;
 
 const MR_API_WSDL_URL = "https://api.mondialrelay.com/Web_Services.asmx?WSDL";
 
@@ -1213,7 +1214,7 @@ app.get("/mondialrelay-points-relais", async (req, res) => {
                  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
       <WSI4_PointRelais_Recherche xmlns="http://www.mondialrelay.fr/webservice/">
-        <Enseigne>CC23O6TF</Enseigne>
+        <Enseigne>${enseigne}</Enseigne>
         <Pays>FR</Pays>
         <CP>${postcode}</CP>
         <NombreResultats>7</NombreResultats>

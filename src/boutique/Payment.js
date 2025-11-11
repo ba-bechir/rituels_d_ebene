@@ -715,5 +715,6 @@ const Payment = () => {
 
 //Enlever le stock en base
 //MàJ paye à 1
+//Mettre les variables d'env en prod
 
 export default Payment;

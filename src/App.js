@@ -22,6 +22,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Payment from "./boutique/Payment.js";
 import "leaflet/dist/leaflet.css";
+import ConfirmationPage from "./boutique/ConfirmationPage.js";
 
 function App() {
   const location = useLocation();
@@ -117,6 +118,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="client">
               <Payment />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/confirmation"
+          element={
+            <ProtectedRoute requiredRole="client">
+              <ConfirmationPage />
             </ProtectedRoute>
           }
         />
