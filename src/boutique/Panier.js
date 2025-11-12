@@ -12,11 +12,40 @@ export default function Panier() {
     setPanier(panierStocke);
   }, []);
 
+  // Met à jour localStorage + state
   const updateLocalStorageAndState = (newPanier) => {
     localStorage.setItem("panier", JSON.stringify(newPanier));
     setPanier(newPanier);
   };
 
+  // API call pour mettre à jour la quantité en base
+  const updateQuantiteBackend = async (id_produit, quantite) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/cart/quantite`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ id_produit, quantite }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`);
+      }
+
+      toast.success("Quantité mise à jour avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour en base");
+      console.error(error);
+    }
+  };
+
+  // Diminuer la quantité localement et côté backend
   const diminuerQuantite = (id) => {
     const newPanier = panier.map((item) =>
       item.id === id
@@ -24,8 +53,11 @@ export default function Panier() {
         : item
     );
     updateLocalStorageAndState(newPanier);
+    const quantiteMaj = newPanier.find((item) => item.id === id)?.quantite || 1;
+    updateQuantiteBackend(id, quantiteMaj);
   };
 
+  // Augmenter la quantité localement et côté backend, avec contrôle stock
   const augmenterQuantite = (id) => {
     let quantiteChangee = false;
     const newPanier = panier.map((item) => {
@@ -44,12 +76,17 @@ export default function Panier() {
     });
     if (quantiteChangee) {
       updateLocalStorageAndState(newPanier);
+      const quantiteMaj =
+        newPanier.find((item) => item.id === id)?.quantite || 1;
+      updateQuantiteBackend(id, quantiteMaj);
     }
   };
 
+  // Supprimer produit localement et optionnellement côté backend (à gérer dans autre route)
   const supprimerProduit = (id) => {
     const newPanier = panier.filter((item) => item.id !== id);
     updateLocalStorageAndState(newPanier);
+    // Eventuellement appels API pour supprimer en base (non inclus ici)
   };
 
   const total = panier.reduce(
@@ -57,7 +94,7 @@ export default function Panier() {
     0
   );
 
-  // Redirection en fonction du login ou non
+  // Redirection selon login
   const handleCommander = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -73,7 +110,6 @@ export default function Panier() {
 
   return (
     <div className={styles.cartPageContainer}>
-      {/* colonne gauche - panier */}
       <section className={styles.cartListColumn}>
         <h1 className={styles.title}>Mon panier</h1>
         <ul className={styles.cartList}>
@@ -135,7 +171,6 @@ export default function Panier() {
           })}
         </ul>
       </section>
-      {/* colonne droite - récapitulatif */}
       <aside className={styles.summaryColumn}>
         <h2 className={styles.summaryTitle}>Récapitulatif</h2>
         <div className={styles.summaryBlock}>

@@ -79,6 +79,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (event) => {
+    console.log("l’utilisateur soumet bien le formulaire de paiement");
     event.preventDefault();
     if (!stripe || !elements) return;
 
@@ -97,17 +98,21 @@ const PaymentForm = ({ onPaymentSuccess }) => {
       });
 
       if (result.error) {
+        console.log("Erreur Stripe:", result.error);
         setError(result.error.message);
         setSuccess(false);
-      } else if (
-        result.paymentIntent &&
-        result.paymentIntent.status === "succeeded"
-      ) {
-        setSuccess(true);
-        setError("");
-        onPaymentSuccess && onPaymentSuccess(result.paymentIntent);
+      } else if (result.paymentIntent) {
+        console.log("PaymentIntent reçu:", result.paymentIntent);
+        if (result.paymentIntent.status === "succeeded") {
+          setSuccess(true);
+          setError("");
+          onPaymentSuccess && onPaymentSuccess(result.paymentIntent);
+        } else {
+          console.log("PaymentIntent status:", result.paymentIntent.status);
+        }
       }
     } catch (err) {
+      console.error("Exception lors du paiement:", err);
       setError("Erreur lors du paiement. Veuillez réessayer.");
       setSuccess(false);
     }

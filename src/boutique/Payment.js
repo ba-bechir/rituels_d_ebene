@@ -6,6 +6,7 @@ import L from "leaflet";
 import PaymentForm from "../components/PaymentForm.js";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import config from "../config.js";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY); // Ta clé publique. A changer pour la prod
 
@@ -705,7 +706,7 @@ const Payment = () => {
           <p>Chargement du paiement...</p>
         ) : (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <PaymentForm onPaymentSuccess={() => alert("Paiement réussi !")} />
+            <PaymentForm />
           </Elements>
         )}
       </aside>
