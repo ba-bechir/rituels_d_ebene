@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import styles from "../css/boutique/ProductDetails.module.css";
 import { toast } from "react-toastify";
+import styles from "../css/boutique/ProductDetails.module.css";
 
 export default function TisanesDetails() {
   const { id } = useParams();
@@ -45,11 +45,13 @@ export default function TisanesDetails() {
   const canIncrease = quantite < stockDisponible;
   const total = (quantite * Number(produit.prix)).toFixed(2);
 
-  // Fonction d'ajout au panier local/session utilisateur non connecté
-  function ajouterAuPanier(produitAAjouter, quantiteAAjouter) {
+  // Fonction d’ajout au panier local/session utilisateur non connecté,
+  // et persistance backend en cas d’utilisateur connecté
+  async function ajouterAuPanier(produitAAjouter, quantiteAAjouter) {
     const panier = JSON.parse(localStorage.getItem("panier")) || [];
     const index = panier.findIndex((item) => item.id === produitAAjouter.id);
 
+    let nouvelleQuantite;
     if (index > -1) {
       if (
         panier[index].quantite + quantiteAAjouter <=
@@ -57,11 +59,12 @@ export default function TisanesDetails() {
       ) {
         panier[index].quantite += quantiteAAjouter;
         panier[index].quantite_stock = produitAAjouter.quantite_stock;
+        nouvelleQuantite = panier[index].quantite;
       } else {
         toast.error(
           `Stock maximal atteint pour ${produitAAjouter.nom_produit} : ${produitAAjouter.quantite_stock}`
         );
-        return false;
+        return false; // Échec ajout (stock max)
       }
     } else {
       panier.push({
@@ -74,19 +77,48 @@ export default function TisanesDetails() {
         quantite_en_g: produitAAjouter.quantite_en_g,
         quantite_en_sachet: produitAAjouter.quantite_en_sachet,
       });
+      nouvelleQuantite = quantiteAAjouter;
     }
+
     localStorage.setItem("panier", JSON.stringify(panier));
+    setQuantite(1); // reset quantité après ajout
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/cart/ajouter`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              id_produit: produitAAjouter.id,
+              quantite: nouvelleQuantite,
+            }),
+          }
+        );
+        if (!res.ok) throw new Error("Erreur mise à jour panier backend");
+      } catch (err) {
+        console.error(err);
+        toast.error("Impossible de synchroniser avec le panier en base.");
+      }
+    } else {
+      toast.info("Connectez-vous pour sauvegarder votre panier.");
+    }
     return true;
   }
 
-  function handleAddToCart() {
+  async function handleAddToCart() {
     if (quantite > stockDisponible) {
       toast.error(
         `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
       );
       return;
     }
-    const success = ajouterAuPanier(produit, quantite);
+    const success = await ajouterAuPanier(produit, quantite);
     if (success) {
       toast.success("Produit ajouté au panier !");
     }
@@ -104,6 +136,7 @@ export default function TisanesDetails() {
             alt={produit.nom_produit}
           />
         )}
+
         <p className={styles["pb-pricing"]}>
           <strong>
             {Number(produit.prix).toFixed(2)} € /{" "}

@@ -45,19 +45,20 @@ export default function PlantesBrutesDetails() {
   const canIncrease = quantite < stockDisponible;
   const total = (quantite * Number(produit.prix)).toFixed(2);
 
-  // Fonction d’ajout au panier (gestion locale pour non connecté)
-  function ajouterAuPanier(produitAAjouter, quantiteAAjouter) {
+  // Fonction d’ajout au panier avec persistance backend si connecté
+  async function ajouterProduit(produitAAjouter, quantiteAAjouter) {
     const panier = JSON.parse(localStorage.getItem("panier")) || [];
     const index = panier.findIndex((item) => item.id === produitAAjouter.id);
 
+    let nouvelleQuantite;
     if (index > -1) {
-      // Produit déjà dans panier = augmenter si possible
       if (
         panier[index].quantite + quantiteAAjouter <=
         produitAAjouter.quantite_stock
       ) {
         panier[index].quantite += quantiteAAjouter;
         panier[index].quantite_stock = produitAAjouter.quantite_stock;
+        nouvelleQuantite = panier[index].quantite;
       } else {
         toast.error(
           `Stock maximal atteint pour ${produitAAjouter.nom_produit} : ${produitAAjouter.quantite_stock}`
@@ -65,7 +66,6 @@ export default function PlantesBrutesDetails() {
         return false; // Échec ajout (stock max)
       }
     } else {
-      // Produit absent = on ajoute avec la quantité choisie
       panier.push({
         id: produitAAjouter.id,
         nom: produitAAjouter.nom_produit,
@@ -75,21 +75,51 @@ export default function PlantesBrutesDetails() {
         quantite_stock: produitAAjouter.quantite_stock,
         quantite_en_g: produitAAjouter.quantite_en_g,
       });
+      nouvelleQuantite = quantiteAAjouter;
     }
 
     localStorage.setItem("panier", JSON.stringify(panier));
-    return true; // Succès
+    setQuantite(1); // Reset quantité choisie après ajout
+
+    // Persistance backend
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/cart/ajouter`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              id_produit: produitAAjouter.id,
+              quantite: nouvelleQuantite,
+            }),
+          }
+        );
+        if (!res.ok) throw new Error("Erreur mise à jour panier backend");
+      } catch (err) {
+        console.error(err);
+        toast.error("Impossible de synchroniser avec le panier en base.");
+        // Attention, produit ajouté en local mais pas en base
+      }
+    } else {
+      toast.info("Connectez-vous pour sauvegarder votre panier.");
+    }
+    return true;
   }
 
   // Handler bouton ajout panier
-  function handleAddToCart() {
+  async function handleAddToCart() {
     if (quantite > stockDisponible) {
       toast.error(
         `Quantité maximale disponible : ${stockDisponible}. Veuillez ajuster votre sélection.`
       );
       return;
     }
-    const success = ajouterAuPanier(produit, quantite);
+    const success = await ajouterProduit(produit, quantite);
     if (success) {
       toast.success("Produit ajouté au panier !");
     }

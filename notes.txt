@@ -1,2 +1,3 @@
 Vérifier les variables d'env pour la prod pour Stripe
 Modifier Taarif Mondial Relay
+URL post paiement
