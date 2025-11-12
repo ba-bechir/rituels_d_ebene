@@ -1150,7 +1150,7 @@ function cleanParams(obj) {
   );
 }
 
-app.post("/persist-adresses", authMiddleware, async (req, res) => {
+app.post(`${BASE_PATH}/persist-adresses`, authMiddleware, async (req, res) => {
   const { livraison, facturation } = req.body;
   const userId = req.user.id;
   const connection = await getConnection();
@@ -1264,7 +1264,7 @@ app.post("/persist-adresses", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/colissimo-tarif", async (req, res) => {
+app.get(`${BASE_PATH}/colissimo-tarif`, async (req, res) => {
   const poids = Number(req.query.poids); // poids en GRAMMES
 
   const connection = await getConnection();
@@ -1283,7 +1283,7 @@ app.get("/colissimo-tarif", async (req, res) => {
 // Endpoint pour récupérer les points relais par code postal
 const MR_API_ENDPOINT = "https://api.mondialrelay.com/Web_Services.asmx";
 
-app.get("/mondialrelay-points-relais", async (req, res) => {
+app.get(`${BASE_PATH}/mondialrelay-points-relais`, async (req, res) => {
   const { postcode } = req.query;
   if (!postcode)
     return res.status(400).json({ error: "Le code postal est requis" });
@@ -1336,7 +1336,7 @@ app.get("/mondialrelay-points-relais", async (req, res) => {
   }
 });
 
-app.post("/create-payment-intent", async (req, res) => {
+app.post(`${BASE_PATH}/create-payment-intent`, async (req, res) => {
   try {
     const { amount } = req.body;
     // Validation minimum
@@ -1353,46 +1353,85 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-app.post("/cart/ajouter", authorizeRole("client"), async (req, res) => {
-  const userId = req.user.id;
-  const { id_produit, quantite } = req.body;
+app.post(
+  `${BASE_PATH}/cart/ajouter`,
+  authorizeRole("client"),
+  async (req, res) => {
+    const userId = req.user.id;
+    const { id_produit, quantite } = req.body;
 
-  if (!id_produit || !quantite || quantite < 1) {
-    return res.status(400).json({ message: "Données invalides" });
-  }
-
-  const connection = await getConnection();
-
-  try {
-    // Vérifier si le produit est déjà dans le panier
-    const [rows] = await connection.execute(
-      "SELECT * FROM cart WHERE id_utilisateur = ? AND id_produit = ?",
-      [userId, id_produit]
-    );
-
-    if (rows.length > 0) {
-      // Met à jour la quantité en additionnant
-      const nouvelleQuantite = rows[0].quantite + quantite;
-      await connection.execute(
-        "UPDATE cart SET quantite = ? WHERE id_utilisateur = ? AND id_produit = ?",
-        [nouvelleQuantite, userId, id_produit]
-      );
-    } else {
-      // Insère une nouvelle ligne panier
-      await connection.execute(
-        "INSERT INTO cart (id_utilisateur, id_produit, quantite, paye) VALUES (?, ?, ?, 0)",
-        [userId, id_produit, quantite]
-      );
+    if (!id_produit || !quantite || quantite < 1) {
+      return res.status(400).json({ message: "Données invalides" });
     }
 
-    res.json({ message: "Produit ajouté au panier" });
-  } catch (err) {
-    console.error("Erreur ajout panier :", err);
-    res
-      .status(500)
-      .json({ message: "Erreur serveur lors de l'ajout au panier" });
+    const connection = await getConnection();
+
+    try {
+      // Vérifier si le produit est déjà dans le panier
+      const [rows] = await connection.execute(
+        "SELECT * FROM cart WHERE id_utilisateur = ? AND id_produit = ?",
+        [userId, id_produit]
+      );
+
+      if (rows.length > 0) {
+        // Met à jour la quantité en additionnant
+        const nouvelleQuantite = rows[0].quantite + quantite;
+        await connection.execute(
+          "UPDATE cart SET quantite = ? WHERE id_utilisateur = ? AND id_produit = ?",
+          [nouvelleQuantite, userId, id_produit]
+        );
+      } else {
+        // Insère une nouvelle ligne panier
+        await connection.execute(
+          "INSERT INTO cart (id_utilisateur, id_produit, quantite, paye) VALUES (?, ?, ?, 0)",
+          [userId, id_produit, quantite]
+        );
+      }
+
+      res.json({ message: "Produit ajouté au panier" });
+    } catch (err) {
+      console.error("Erreur ajout panier :", err);
+      res
+        .status(500)
+        .json({ message: "Erreur serveur lors de l'ajout au panier" });
+    }
   }
-});
+);
+
+app.delete(
+  `${BASE_PATH}/cart/:id_produit`,
+  authorizeRole("client"),
+  async (req, res) => {
+    const userId = req.user.id;
+    const id_produit = parseInt(req.params.id_produit);
+
+    if (!id_produit || isNaN(id_produit)) {
+      return res.status(400).json({ message: "ID produit invalide" });
+    }
+
+    const connection = await getConnection();
+
+    try {
+      const [result] = await connection.execute(
+        "DELETE FROM cart WHERE id_utilisateur = ? AND id_produit = ?",
+        [userId, id_produit]
+      );
+
+      if (result.affectedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "Produit non trouvé dans le panier" });
+      }
+
+      res.json({ message: "Produit supprimé du panier avec succès" });
+    } catch (err) {
+      console.error("Erreur suppression panier :", err);
+      res
+        .status(500)
+        .json({ message: "Erreur serveur lors de la suppression du produit" });
+    }
+  }
+);
 
 // ------ Start server ------
 const PORT = process.env.PORT || 3001;

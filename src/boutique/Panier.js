@@ -83,10 +83,37 @@ export default function Panier() {
   };
 
   // Supprimer produit localement et optionnellement côté backend (à gérer dans autre route)
-  const supprimerProduit = (id) => {
+  const supprimerProduit = async (id) => {
+    // Mise à jour locale (state + localStorage)
     const newPanier = panier.filter((item) => item.id !== id);
     updateLocalStorageAndState(newPanier);
-    // Eventuellement appels API pour supprimer en base (non inclus ici)
+
+    // Supprimer en base si utilisateur connecté
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/cart/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Erreur serveur ${response.status}`);
+        }
+
+        toast.success("Produit supprimé du panier.");
+      } catch (error) {
+        toast.error("Erreur lors de la suppression en base.");
+        console.error("Erreur suppression panier backend :", error);
+      }
+    } else {
+      toast.info("Connectez-vous pour synchroniser votre panier.");
+    }
   };
 
   const total = panier.reduce(
