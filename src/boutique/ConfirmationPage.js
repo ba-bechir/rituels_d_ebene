@@ -43,6 +43,7 @@ export default function ConfirmationPage() {
           });
 
           if (response.ok) {
+            localStorage.removeItem("panier");
             setMessage(
               "Merci pour votre commande ! Votre paiement a été accepté."
             );
