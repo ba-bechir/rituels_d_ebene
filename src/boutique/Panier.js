@@ -10,6 +10,7 @@ export default function Panier() {
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
     setPanier(panierStocke);
+    console.table(panierStocke);
   }, []);
 
   // Met à jour localStorage + state
@@ -123,6 +124,7 @@ export default function Panier() {
 
   // Redirection selon login
   const handleCommander = () => {
+    console.table(panier);
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/compte?from=checkout");

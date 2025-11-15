@@ -32,6 +32,14 @@ export default function ConfirmationPage() {
       if (paymentIntent?.status === "succeeded") {
         setMessage("Paiement confirmé, mise à jour de votre commande...");
 
+        // Récupération des IDs d'adresse stockés localement
+        const idFacturation = localStorage.getItem("idFacturation");
+        const idLivraison = localStorage.getItem("idLivraison");
+        /*if (!idFacturation || !idLivraison) {
+          setMessage("Commande déjà finalisée ou informations manquantes.");
+          return;
+        }*/
+
         try {
           const token = localStorage.getItem("token");
           const response = await fetch(`${config.apiUrl}/cart/payee`, {
@@ -40,10 +48,16 @@ export default function ConfirmationPage() {
               "Content-Type": "application/json",
               Authorization: "Bearer " + token,
             },
+            body: JSON.stringify({
+              idFacturation,
+              idLivraison,
+            }),
           });
 
           if (response.ok) {
             localStorage.removeItem("panier");
+            localStorage.removeItem("idFacturation");
+            localStorage.removeItem("idLivraison");
             setMessage(
               "Merci pour votre commande ! Votre paiement a été accepté."
             );

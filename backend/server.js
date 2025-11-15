@@ -870,50 +870,75 @@ app.use((req, res, next) => {
 
 app.put(`${BASE_PATH}/cart/payee`, authMiddleware, async (req, res) => {
   const userId = req.user.id;
+  const { idFacturation, idLivraison } = req.body;
+  console.log(
+    `[${new Date().toISOString()}] Requête reçue sur /cart/payee pour userId=${userId}, idFacturation=${idFacturation}, idLivraison=${idLivraison}`
+  );
+
   const connection = await getConnection();
 
   try {
-    // 1) Met à jour paye = 1 dans la table cart pour marquer la commande en cours de finalisation
+    // 1. Vérifier si le panier contient des articles NON PAYÉS
+    const [cartItems] = await connection.execute(
+      `SELECT c.id_produit, c.quantite, uv.prix
+       FROM cart c
+       JOIN unite_vente uv ON c.id_produit = uv.id_produit
+       WHERE c.id_utilisateur = ? AND c.paye = 0`,
+      [userId]
+    );
+
+    /*if (cartItems.length === 0) {
+      return res.status(400).json({ message: "Panier vide ou déjà traité" });
+    }*/
+
+    // 2. Verrouille immédiatement le panier (évite les doubles traitements)
     await connection.execute(
       "UPDATE cart SET paye = 1 WHERE id_utilisateur = ? AND paye = 0",
       [userId]
     );
 
-    // 2) Récupère les articles payés dans le panier
-    const [cartArticles] = await connection.execute(
-      "SELECT * FROM cart WHERE id_utilisateur = ? AND paye = 1",
-      [userId]
+    // 3. Créer la nouvelle commande
+    const [resultCommande] = await connection.execute(
+      "INSERT INTO commande (id_utilisateur, created_at, updated_at, paye, commande_preparee, id_facturation, id_livraison) VALUES (?, NOW(), NOW(), 1, 0, ?, ?)",
+      [userId, idFacturation || null, idLivraison || null]
     );
+    const idCommande = resultCommande.insertId;
 
-    // 3) Insère ces articles dans la table commande
-    // En supposant que colonne "id" est auto-incrémentée dans commande aussi
-    for (const item of cartArticles) {
-      // Supprime la colonne id car auto-incrémentée dans la nouvelle table
-      const { id, ...data } = item;
-      await connection.execute(
-        `INSERT INTO commande (id_utilisateur, id_produit, quantite, created_at, updated_at, paye, commande_preparee, id_facturation, id_livraison)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          data.id_utilisateur,
-          data.id_produit,
-          data.quantite,
-          data.created_at,
-          data.updated_at,
-          data.paye,
-          data.commande_preparee,
-          data.id_facturation,
-          data.id_livraison,
-        ]
-      );
+    // 4. Agrège le panier par produit
+    const regroupedItems = {};
+    cartItems.forEach((item) => {
+      if (regroupedItems[item.id_produit]) {
+        regroupedItems[item.id_produit].quantite += item.quantite;
+      } else {
+        regroupedItems[item.id_produit] = { ...item };
+      }
+    });
+
+    // 5. Crée les lignes commande_article et met à jour les stocks
+    console.log("cartItems:", cartItems);
+    console.log("regroupedItems:", regroupedItems);
+    console.log("idCommande:", idCommande);
+    for (const item of Object.values(regroupedItems)) {
+      try {
+        await connection.execute(
+          "INSERT INTO commande_article (id_commande, id_produit, quantite, prix_unitaire) VALUES (?, ?, ?, ?)",
+          [idCommande, item.id_produit, item.quantite, item.prix]
+        );
+        await connection.execute(
+          "UPDATE unite_vente SET quantite_stock = GREATEST(quantite_stock - ?, 0) WHERE id_produit = ?",
+          [item.quantite, item.id_produit]
+        );
+      } catch (err) {
+        console.log("Erreur commande_article:", err);
+      }
     }
 
-    // 4) Supprime les lignes payées dans cart pour vider le panier
     await connection.execute(
       "DELETE FROM cart WHERE id_utilisateur = ? AND paye = 1",
       [userId]
     );
 
-    res.json({ message: "Commande finalisée avec succès" });
+    res.json({ message: "Commande finalisée avec succès." });
   } catch (error) {
     console.error("Erreur finalisation commande:", error);
     res.status(500).json({

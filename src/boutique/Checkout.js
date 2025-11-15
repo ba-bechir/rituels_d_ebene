@@ -43,6 +43,7 @@ const Checkout = () => {
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
     setPanier(panierStocke);
+    console.table(panierStocke);
   }, []);
 
   const totalProduits = panier.reduce(
@@ -94,7 +95,12 @@ const Checkout = () => {
       });
 
       if (!res.ok) throw new Error("Erreur lors de l'enregistrement.");
-      // Redirige ou montre message de succès selon logique métier ici
+      const data = await res.json(); // attend que backend renvoie { idFacturation: ..., idLivraison: ... }
+      console.log(data);
+      // Stocke ensuite ces IDs en localStorage pour pouvoir les récupérer plus tard
+      localStorage.setItem("idFacturation", data.id_facturation);
+      localStorage.setItem("idLivraison", data.id_livraison);
+
       alert("Adresses enregistrées.");
     } catch (err) {
       alert("Erreur lors de la sauvegarde : " + err.message);
