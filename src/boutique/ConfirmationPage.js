@@ -60,6 +60,7 @@ export default function ConfirmationPage() {
             localStorage.removeItem("panier");
             localStorage.removeItem("idFacturation");
             localStorage.removeItem("idLivraison");
+            localStorage.removeItem("modeLivraison");
             setMessage(
               "Merci pour votre commande ! Votre paiement a été accepté."
             );

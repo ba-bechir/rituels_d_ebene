@@ -372,7 +372,7 @@ const CustomRelaySelector = ({ postcode, onConfirm, onCancel }) => {
 
 const Payment = () => {
   const [panier, setPanier] = useState([]);
-  const [mode, setMode] = useState("domicile");
+  const [mode, setMode] = useState(null);
   const [sousMode, setSousMode] = useState("colissimo");
   const [adresseLivraison, setAdresseLivraison] = useState(null);
   const [fraisPort, setFraisPort] = useState(null);
@@ -382,6 +382,13 @@ const Payment = () => {
 
   // State clientSecret Stripe
   const [clientSecret, setClientSecret] = useState("");
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem("modeLivraison");
+    if (savedMode) {
+      setMode(savedMode);
+    }
+  }, []);
 
   useEffect(() => {
     const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
