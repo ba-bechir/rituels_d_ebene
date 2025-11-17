@@ -23,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Payment from "./boutique/Payment.js";
 import "leaflet/dist/leaflet.css";
 import ConfirmationPage from "./boutique/ConfirmationPage.js";
+import CommandeList from "./admin/orders/CommandeList.js";
 
 function App() {
   const location = useLocation();
@@ -100,6 +101,15 @@ function App() {
           element={
             <AdminRoute>
               <ProductList />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/liste-commandes"
+          element={
+            <AdminRoute>
+              <CommandeList />
             </AdminRoute>
           }
         />

@@ -1,3 +1,10 @@
 Vérifier les variables d'env pour la prod pour Stripe
 Modifier Taarif Mondial Relay
-URL post paiement
+Bordereau d'expédition Mondial Relay
+Bordereau d'expédition Mondial Colissimo
+Email récapitulatif de commande
+Au bout de plusieurs minutes sans action, deconnexion
+Mdp oublié
+Mentions Légales
+Ménage dans le footer
+Distinguer si une commande à été préparer/expédié ou non

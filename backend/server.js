@@ -1361,6 +1361,22 @@ app.get(`${BASE_PATH}/mondialrelay-points-relais`, async (req, res) => {
   }
 });
 
+// Exemple Node.js/Express pour /api/commandes
+app.get(`${BASE_PATH}/list-commandes`, async (req, res) => {
+  try {
+    const connection = await getConnection();
+    const [rows] = await connection.execute(
+      "SELECT c.id, c.created_at FROM commande c ORDER BY c.created_at DESC"
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Erreur récupération commandes:", error);
+    res
+      .status(500)
+      .json({ error: "Erreur serveur lors de la récupération des commandes." });
+  }
+});
+
 app.post(`${BASE_PATH}/create-payment-intent`, async (req, res) => {
   try {
     const { amount } = req.body;

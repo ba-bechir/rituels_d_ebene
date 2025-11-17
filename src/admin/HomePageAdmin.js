@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import "../css/admin/HomePageAdmin.css";
 import produitImage from "../icones/stock.png";
 import { useNavigate } from "react-router-dom";
-import config from '../config.js';
+import config from "../config.js";
 
 function Administration() {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,10 @@ function Administration() {
 
   const handleProductsClick = () => {
     navigate("/liste-produits");
+  };
+
+  const handleCommandeClick = () => {
+    navigate("/liste-commandes");
   };
 
   useEffect(() => {
@@ -51,20 +55,28 @@ function Administration() {
   return (
     <div className="administration">
       <h1>Administration</h1>
-
-      <div className="card">
-        <div className="image-container">
-          <img
-            src={produitImage}
-            style={{ width: "100px", height: "100px" }}
-            onClick={handleProductsClick}
-          />
+      <div className="cards-row">
+        <div className="card">
+          <div className="image-container">
+            <img
+              src={produitImage}
+              style={{ width: "100px", height: "100px" }}
+              onClick={handleProductsClick}
+            />
+          </div>
+          <p>Produits</p>
         </div>
-        <p>Produits</p>
+        <div className="card">
+          <div className="">
+            <img
+              src={produitImage}
+              style={{ width: "100px", height: "100px" }}
+              onClick={handleCommandeClick}
+            />
+          </div>
+          <p>Commandes</p>
+        </div>
       </div>
-
-      {message && <p>{message}</p>}
-
     </div>
   );
 }
