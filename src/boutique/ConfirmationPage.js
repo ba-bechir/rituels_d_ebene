@@ -35,11 +35,12 @@ export default function ConfirmationPage() {
         // Récupération des IDs d'adresse stockés localement
         const idFacturation = localStorage.getItem("idFacturation");
         const idLivraison = localStorage.getItem("idLivraison");
+        const modeLivraison = localStorage.getItem("modeLivraison");
         /*if (!idFacturation || !idLivraison) {
           setMessage("Commande déjà finalisée ou informations manquantes.");
           return;
         }*/
-
+        console.log("methodeDeLivraison envoyée :", modeLivraison);
         try {
           const token = localStorage.getItem("token");
           const response = await fetch(`${config.apiUrl}/cart/payee`, {
@@ -51,6 +52,7 @@ export default function ConfirmationPage() {
             body: JSON.stringify({
               idFacturation,
               idLivraison,
+              modeLivraison,
             }),
           });
 

@@ -500,6 +500,11 @@ const Payment = () => {
     0
   );
 
+  const handleMethodeChange = (value) => {
+    setMode(value); // mettre à jour l'état React
+    localStorage.setItem("modeLivraison", value); // stocker dans localStorage
+  };
+
   return (
     <div className={styles.checkoutContainer}>
       <section
@@ -523,7 +528,7 @@ const Payment = () => {
             name="mode"
             value="domicile"
             checked={mode === "domicile"}
-            onChange={() => setMode("domicile")}
+            onChange={() => handleMethodeChange("domicile")}
             style={{ marginRight: 8 }}
           />
           Livraison à domicile <span className={styles.deliveryIcon}>🏠</span>
@@ -587,7 +592,7 @@ const Payment = () => {
             name="mode"
             value="relais"
             checked={mode === "relais"}
-            onChange={() => setMode("relais")}
+            onChange={() => handleMethodeChange("relais")}
             style={{ marginRight: 8 }}
           />
           Retrait dans un point relais{" "}

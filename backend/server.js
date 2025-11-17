@@ -870,11 +870,11 @@ app.use((req, res, next) => {
 
 app.put(`${BASE_PATH}/cart/payee`, authMiddleware, async (req, res) => {
   const userId = req.user.id;
-  const { idFacturation, idLivraison } = req.body;
+  const { idFacturation, idLivraison, modeLivraison } = req.body;
   console.log(
     `[${new Date().toISOString()}] Requête reçue sur /cart/payee pour userId=${userId}, idFacturation=${idFacturation}, idLivraison=${idLivraison}`
   );
-
+  console.log(req.body);
   const connection = await getConnection();
 
   try {
@@ -899,8 +899,8 @@ app.put(`${BASE_PATH}/cart/payee`, authMiddleware, async (req, res) => {
 
     // 3. Créer la nouvelle commande
     const [resultCommande] = await connection.execute(
-      "INSERT INTO commande (id_utilisateur, created_at, updated_at, paye, commande_preparee, id_facturation, id_livraison) VALUES (?, NOW(), NOW(), 1, 0, ?, ?)",
-      [userId, idFacturation || null, idLivraison || null]
+      "INSERT INTO commande (id_utilisateur, created_at, updated_at, paye, commande_preparee, id_facturation, id_livraison, methode_de_livraison) VALUES (?, NOW(), NOW(), 1, 0, ?, ?, ?)",
+      [userId, idFacturation || null, idLivraison || null, modeLivraison]
     );
     const idCommande = resultCommande.insertId;
 
