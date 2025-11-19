@@ -629,9 +629,11 @@ const Payment = () => {
         {mode === "relais" && pointRelais && (
           <div style={{ marginBottom: 12, marginLeft: 20, color: "#2671ff" }}>
             <strong>Point relais sélectionné :</strong>
-            <div>{pointRelais.LgAdr1 || pointRelais.Information}</div>
+            <br />
+            {pointRelais.LgAdr1 || pointRelais.Information}
+            <br />
             <span>
-              {pointRelais.LgAdr3 && `${pointRelais.LgAdr3}, `}
+              {pointRelais.LgAdr3} <br />
               {pointRelais.CP} {pointRelais.Ville}
             </span>
           </div>

@@ -21,7 +21,7 @@ function CommandeList() {
   }, []);
 
   const handleDetailClick = (commande) => {
-    alert("Détails commande ID : " + commande.id);
+    alert("Détails commande ID : " + commande.id_commande);
   };
 
   if (loading) return <p>Chargement des commandes...</p>;
@@ -48,9 +48,9 @@ function CommandeList() {
             </tr>
           ) : (
             commandes.map((commande) => (
-              <tr key={commande.id}>
+              <tr key={commande.id_commande}>
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>
-                  {commande.id}
+                  {commande.id_commande}
                 </td>
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>
                   {new Date(commande.created_at).toLocaleString("fr-FR", {

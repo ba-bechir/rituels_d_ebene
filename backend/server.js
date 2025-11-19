@@ -1366,7 +1366,7 @@ app.get(`${BASE_PATH}/list-commandes`, async (req, res) => {
   try {
     const connection = await getConnection();
     const [rows] = await connection.execute(
-      "SELECT c.id, c.created_at FROM commande c ORDER BY c.created_at DESC"
+      "SELECT ca.id_commande, c.created_at FROM commande c, commande_article ca where c.id = ca.id_commande GROUP BY ca.id_commande ORDER BY c.created_at DESC"
     );
     res.json(rows);
   } catch (error) {
