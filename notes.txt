@@ -13,3 +13,4 @@ Impossibilité de retourner vers certaines pages
 Bouton Payer griser si on ne choisit pas un point relais lorsque l'utilisateur click sur le bouton radio
 Revoir l'URL de paiement...
 Responsive
+Supprimer /checkout

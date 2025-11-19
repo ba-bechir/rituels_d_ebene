@@ -16,7 +16,6 @@ import PoudresDetails from "./boutique/PoudresDetails.js";
 import Inscription from "./forms/Inscription.js";
 import ConfirmAccount from "./components/ConfirmAccount.js";
 import Panier from "./boutique/Panier.js";
-import Checkout from "./boutique/Checkout.js";
 import ProtectedRoute from "./ProtectedRoute.js";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -111,15 +110,6 @@ function App() {
             <AdminRoute>
               <CommandeList />
             </AdminRoute>
-          }
-        />
-
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute requiredRole="client">
-              <Checkout />
-            </ProtectedRoute>
           }
         />
 

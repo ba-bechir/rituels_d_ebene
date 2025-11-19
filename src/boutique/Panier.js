@@ -127,9 +127,9 @@ export default function Panier() {
     console.table(panier);
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/compte?from=checkout");
+      navigate("/compte?from=payment");
     } else {
-      navigate("/checkout");
+      navigate("/payment");
     }
   };
 

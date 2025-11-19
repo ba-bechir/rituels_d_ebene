@@ -7,6 +7,10 @@ import PaymentForm from "../components/PaymentForm.js";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import config from "../config.js";
+import FacturationForm from "../components/FacturationForm.js";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import TestPopup from "../components/TestPopup.js";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY); // Ta clé publique. A changer pour la prod
 
@@ -44,7 +48,7 @@ function renderHoraires(horaires) {
   return paires.length ? paires.join(", ") : "fermé";
 }
 
-// Modal édition adresse
+// Modal édition adresse avec PhoneInput livraison et toggle facturation
 function AddressEditModal({ address, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     prenom_livraison: address?.prenom_livraison || "",
@@ -54,12 +58,39 @@ function AddressEditModal({ address, onSave, onCancel }) {
     code_postal_livraison: address?.code_postal_livraison || "",
     ville_livraison: address?.ville_livraison || "",
   });
+  const [showTestPopup, setShowTestPopup] = useState(true);
+  const [telephoneLivraison, setTelephoneLivraison] = useState(
+    address?.telephone_livraison || ""
+  );
+  const [telephoneFacturation, setTelephoneFacturation] = useState("");
+  const [showFacturation, setShowFacturation] = useState(false);
+  const [formFacturation, setFormFacturation] = useState({
+    prenom: "",
+    nom: "",
+    adresse: "",
+    complement: "",
+    codePostal: "",
+    ville: "",
+    pays: "France",
+  });
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleChangeFacturation = (e) => {
+    const { name, value } = e.target;
+    setFormFacturation((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      telephone_livraison: telephoneLivraison,
+      facturation: showFacturation ? formFacturation : null,
+      telephone_facturation: telephoneFacturation,
+      showFacturation,
+    });
   };
 
   return (
@@ -86,6 +117,7 @@ function AddressEditModal({ address, onSave, onCancel }) {
         }}
       >
         <h3 style={{ marginBottom: 20 }}>Modifier l'adresse de livraison</h3>
+        {showTestPopup && <TestPopup onClose={() => setShowTestPopup(false)} />}
         <form onSubmit={handleSubmit}>
           {[
             { label: "Prénom", name: "prenom_livraison" },
@@ -128,6 +160,108 @@ function AddressEditModal({ address, onSave, onCancel }) {
               />
             </div>
           ))}
+
+          <div className={styles.toggleRow} style={{ marginTop: 20 }}>
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={showFacturation}
+                onChange={() => setShowFacturation((v) => !v)}
+              />
+              <span className={styles.slider}></span>
+            </label>
+            <span className={styles.switchLabel}>
+              Adresse de facturation différentes
+            </span>
+          </div>
+
+          {showFacturation && (
+            <div
+              className={styles.facturationSection}
+              style={{ marginTop: 20 }}
+            >
+              <h3 className={styles.formTitle}>Adresse de facturation</h3>
+              <div className={styles.formRow}>
+                <input
+                  type="text"
+                  name="prenom"
+                  placeholder="Prénom*"
+                  value={formFacturation.prenom}
+                  onChange={handleChangeFacturation}
+                  required
+                  className={styles.inputHalf}
+                />
+                <input
+                  type="text"
+                  name="nom"
+                  placeholder="Nom*"
+                  value={formFacturation.nom}
+                  onChange={handleChangeFacturation}
+                  required
+                  className={styles.inputHalf}
+                />
+              </div>
+              <select
+                name="pays"
+                value={formFacturation.pays}
+                onChange={handleChangeFacturation}
+                className={styles.inputFull}
+              >
+                <option value="France">France</option>
+              </select>
+              <input
+                type="text"
+                name="adresse"
+                placeholder="Adresse*"
+                value={formFacturation.adresse}
+                onChange={handleChangeFacturation}
+                required
+                className={styles.inputFull}
+              />
+              <input
+                type="text"
+                name="complement"
+                placeholder="Complément d'adresse"
+                value={formFacturation.complement}
+                onChange={handleChangeFacturation}
+                className={styles.inputFull}
+              />
+              <div className={styles.formRow}>
+                <input
+                  type="text"
+                  name="codePostal"
+                  placeholder="Code postal*"
+                  value={formFacturation.codePostal}
+                  onChange={handleChangeFacturation}
+                  required
+                  className={styles.inputHalf}
+                />
+                <input
+                  type="text"
+                  name="ville"
+                  placeholder="Ville*"
+                  value={formFacturation.ville}
+                  onChange={handleChangeFacturation}
+                  required
+                  className={styles.inputHalf}
+                />
+              </div>
+              <div className={styles.inputFull} style={{ marginTop: 12 }}>
+                <PhoneInput
+                  international
+                  defaultCountry="FR"
+                  value={telephoneFacturation}
+                  onChange={setTelephoneFacturation}
+                  inputComponent={(props) => (
+                    <input {...props} className={styles.inputTel} />
+                  )}
+                  placeholder="Numéro de téléphone*"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
             <button
               type="button"
@@ -379,15 +513,14 @@ const Payment = () => {
   const [pointRelais, setPointRelais] = useState(null);
   const [showRelaySelector, setShowRelaySelector] = useState(false);
   const [showAddressEditor, setShowAddressEditor] = useState(false);
+  const [showAddressPopup, setShowAddressPopup] = useState(false);
+  const [showFacturation, setShowFacturation] = useState(false);
 
   // State clientSecret Stripe
   const [clientSecret, setClientSecret] = useState("");
 
   useEffect(() => {
-    const savedMode = localStorage.getItem("modeLivraison");
-    if (savedMode) {
-      setMode(savedMode);
-    }
+    localStorage.removeItem("modeLivraison"); // optionnel pour remise à zéro
   }, []);
 
   useEffect(() => {
@@ -467,7 +600,6 @@ const Payment = () => {
         );
         const data = await response.json();
         setClientSecret(data.client_secret); // Assure-toi que le backend renvoie "client_secret"
-        console.log(clientSecret);
       } catch (error) {
         console.error("Erreur création PaymentIntent :", error);
         setClientSecret("");
@@ -508,8 +640,14 @@ const Payment = () => {
   );
 
   const handleMethodeChange = (value) => {
-    setMode(value); // mettre à jour l'état React
-    localStorage.setItem("modeLivraison", value); // stocker dans localStorage
+    setMode(value);
+    localStorage.setItem("modeLivraison", value);
+
+    if (value === "domicile") {
+      setShowAddressPopup(true); // Ouvre popup adresse
+    } else {
+      setShowAddressPopup(false); // Ferme popup sinon
+    }
   };
 
   return (
@@ -656,7 +794,6 @@ const Payment = () => {
           />
         )}
       </section>
-
       <div className={styles.deliverySection}>
         <aside className={styles.rightColumn}>
           <h3>Commande</h3>
@@ -724,12 +861,19 @@ const Payment = () => {
           </Elements>
         )}
       </aside>
+
+      {showAddressPopup && (
+        <FacturationForm
+          address={adresseLivraison}
+          onSave={(newAddress) => {
+            setAdresseLivraison(newAddress);
+            setShowAddressPopup(false);
+          }}
+          onCancel={() => setShowAddressPopup(false)}
+        />
+      )}
     </div>
   );
 };
-
-//Enlever le stock en base
-//MàJ paye à 1
-//Mettre les variables d'env en prod
 
 export default Payment;
