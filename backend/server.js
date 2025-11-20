@@ -313,9 +313,9 @@ app.put(`${BASE_PATH}/adresse-livraison`, authMiddleware, async (req, res) => {
     }
 
     // Validation du code postal (5 chiffres)
-    if (!/^\d{5}$/.test(code_postal_livraison)) {
+    /*if (!/^\d{5}$/.test(code_postal_livraison)) {
       return res.status(400).json({ error: "Code postal invalide" });
-    }
+    }*/
 
     // Récupérer l'id_livraison actuel du panier de l'utilisateur
     const [cartRows] = await connection.execute(
@@ -439,9 +439,9 @@ app.put(
       }
 
       // Validation du code postal (5 chiffres)
-      if (!/^\d{5}$/.test(code_postal_facturation)) {
+      /* if (!/^\d{5}$/.test(code_postal_facturation)) {
         return res.status(400).json({ error: "Code postal invalide" });
-      }
+      }*/
 
       // Récupérer l'id_livraison actuel du panier de l'utilisateur
       const [cartRows] = await connection.execute(
@@ -1166,206 +1166,87 @@ function authMiddleware(req, res, next) {
   }
 }
 
-app.post(`${BASE_PATH}/persist-adresses`, authMiddleware, async (req, res) => {
-  const { livraison, facturation } = req.body;
-  const userId = req.user.id;
-  const connection = await getConnection();
-
-  function cleanParams(data) {
-    return Object.fromEntries(
-      Object.entries(data).map(([key, value]) => {
-        if (typeof value === "string") {
-          const v = value.trim();
-          // Champs obligatoires à forcer non null
-          if (
-            [
-              "prenom",
-              "nom",
-              "telephone",
-              "instruction",
-              "prenom_livraison",
-            ].includes(key)
-          ) {
-            return [key, v === "" ? "" : v.toLowerCase()];
-          }
-          return [key, v === "" ? null : v.toLowerCase()];
-        }
-        if (value === undefined || value === null) {
-          // Pour champs obligatoires, retourne une chaîne vide au lieu de null
-          if (
-            [
-              "prenom",
-              "nom",
-              "telephone",
-              "instruction",
-              "prenom_livraison",
-            ].includes(key)
-          ) {
-            return [key, ""];
-          }
-          return [key, null];
-        }
-        return [key, value];
-      })
-    );
-  }
-
+app.put(`${BASE_PATH}/persist-adresse`, authMiddleware, async (req, res) => {
+  let connection;
   try {
-    const livrCleanOriginal = cleanParams(livraison);
+    connection = await getConnection();
 
-    // Si c'est un relais colis (ex. lg_adr1 existe && prénom vide), on force champs classiques à null
-    const isRelay =
-      livrCleanOriginal.lg_adr1 &&
-      (!livrCleanOriginal.prenom || livrCleanOriginal.prenom === "");
-
-    const livrClean = { ...livrCleanOriginal };
-    if (isRelay) {
-      // Mettre les champs classiques à null
-      [
-        "prenom",
-        "nom",
-        "adresse",
-        "complement",
-        "codePostal",
-        "ville",
-        "pays",
-        "telephone",
-        "instructions",
-      ].forEach((field) => {
-        livrClean[field] = null;
-      });
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(400).json({ error: "Utilisateur non authentifié" });
     }
 
-    const { instructions, ...facturationSansInstructions } = facturation;
-    const factClean = cleanParams(facturationSansInstructions);
+    const {
+      prenom_livraison,
+      nom_livraison,
+      adresse_livraison,
+      complement_adresse_livraison,
+      code_postal_livraison,
+      ville_livraison,
+      telephone_livraison,
+    } = req.body;
 
-    const [livrRows] = await connection.execute(
-      `
-      SELECT id FROM livraison WHERE
-        prenom_livraison <=> ? AND nom_livraison <=> ? AND adresse_livraison <=> ? AND complement_adresse_livraison <=> ? AND
-        code_postal_livraison <=> ? AND ville_livraison <=> ? AND pays_livraison <=> ? AND telephone_livraison <=> ? AND instruction_livraison <=> ? AND
-        lg_adr1 <=> ? AND lg_adr3 <=> ? AND cp <=> ? AND ville <=> ?
-      `,
-      [
-        livrClean.prenom,
-        livrClean.nom,
-        livrClean.adresse,
-        livrClean.complement,
-        livrClean.codePostal,
-        livrClean.ville,
-        livrClean.pays,
-        livrClean.telephone || "", // chaîne vide si null
-        livrClean.instructions || "",
-        livrClean.lg_adr1 || null,
-        livrClean.lg_adr3 || null,
-        livrClean.cp || null,
-        livrClean.ville || null,
-      ]
+    const prenom = prenom_livraison ?? "";
+    const nom = nom_livraison ?? "";
+    const adresse = adresse_livraison ?? "";
+    const complement = complement_adresse_livraison ?? null;
+    const codePostal = code_postal_livraison ?? "";
+    const ville = ville_livraison ?? "";
+    const telephone = telephone_livraison ?? "";
+
+    // Insère l'adresse de livraison
+    const [insertResult] = await connection.execute(
+      `INSERT INTO livraison (
+        prenom_livraison,
+        nom_livraison,
+        adresse_livraison,
+        complement_adresse_livraison,
+        code_postal_livraison,
+        ville_livraison,
+        telephone_livraison
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [prenom, nom, adresse, complement, codePostal, ville, telephone]
     );
 
-    let id_livraison;
-    if (livrRows.length > 0) {
-      id_livraison = livrRows[0].id;
+    const idLivraison = insertResult.insertId;
 
-      await connection.execute(
-        `
-        UPDATE livraison SET lg_adr1 = ?, lg_adr3 = ?, cp = ?, ville = ? WHERE id = ?
-        `,
-        [
-          livrClean.lg_adr1 || null,
-          livrClean.lg_adr3 || null,
-          livrClean.cp || null,
-          livrClean.ville || null,
-          id_livraison,
-        ]
-      );
-    } else {
-      const [livraisonResult] = await connection.execute(
-        `
-        INSERT INTO livraison (
-          prenom_livraison, nom_livraison, adresse_livraison, complement_adresse_livraison,
-          code_postal_livraison, ville_livraison, pays_livraison, telephone_livraison,
-          instruction_livraison, lg_adr1, lg_adr3, cp, ville
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          livrClean.prenom || "",
-          livrClean.nom || "",
-          livrClean.adresse || "",
-          livrClean.complement || "",
-          livrClean.codePostal || "",
-          livrClean.ville || "",
-          livrClean.pays || "",
-          livrClean.telephone || "",
-          livrClean.instructions || "",
-          livrClean.lg_adr1 || null,
-          livrClean.lg_adr3 || null,
-          livrClean.cp || null,
-          livrClean.ville || null,
-        ]
-      );
-      id_livraison = livraisonResult.insertId;
+    // Récupère l'id du dernier panier de l'utilisateur
+    const [cartRows] = await connection.execute(
+      `SELECT id FROM cart WHERE id_utilisateur = ? ORDER BY updated_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (cartRows.length === 0) {
+      return res.status(404).json({ error: "Panier non trouvé" });
     }
 
-    // Handle facturation as before
-    const [factRows] = await connection.execute(
-      `
-      SELECT id FROM facturation WHERE
-        prenom_facturation = ? AND nom_facturation = ? AND adresse_facturation = ? AND complement_adresse_facturation = ? AND
-        code_postal_facturation = ? AND ville_facturation = ? AND pays_facturation = ? AND telephone_facturation = ?
-      `,
-      [
-        factClean.prenom || "",
-        factClean.nom || "",
-        factClean.adresse || "",
-        factClean.complement || "",
-        factClean.codePostal || "",
-        factClean.ville || "",
-        factClean.pays || "",
-        factClean.telephone || "",
-      ]
+    const idCart = cartRows[0].id;
+
+    // Met à jour le panier avec le nouvel id_livraison
+    await connection.execute(`UPDATE cart SET id_livraison = ? WHERE id = ?`, [
+      idLivraison,
+      idCart,
+    ]);
+
+    // Récupère l'adresse complète insérée
+    const [rows] = await connection.execute(
+      `SELECT 
+        prenom_livraison,
+        nom_livraison,
+        adresse_livraison,
+        complement_adresse_livraison,
+        code_postal_livraison,
+        ville_livraison,
+        telephone_livraison 
+       FROM livraison WHERE id = ?`,
+      [idLivraison]
     );
 
-    let id_facturation;
-    if (factRows.length > 0) {
-      id_facturation = factRows[0].id;
-    } else {
-      const [facturationResult] = await connection.execute(
-        `
-        INSERT INTO facturation (
-          prenom_facturation, nom_facturation, adresse_facturation, complement_adresse_facturation,
-          code_postal_facturation, ville_facturation, pays_facturation, telephone_facturation
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          factClean.prenom,
-          factClean.nom,
-          factClean.adresse,
-          factClean.complement,
-          factClean.codePostal,
-          factClean.ville,
-          factClean.pays,
-          factClean.telephone || "",
-        ]
-      );
-      id_facturation = facturationResult.insertId;
-    }
-
-    await connection.execute(
-      `UPDATE cart SET id_facturation = ?, id_livraison = ? WHERE id_utilisateur = ?`,
-      [id_facturation, id_livraison, userId]
-    );
-
-    res.status(200).json({
-      success: true,
-      id_facturation,
-      id_livraison,
-    });
+    // Renvoie l'objet complet UNE SEULE FOIS
+    res.status(201).json(rows[0]);
   } catch (error) {
-    console.error("Erreur dans /persist-adresses:", error);
+    console.error("Erreur persist-adresse insert :", error);
     res.status(500).json({ error: "Erreur serveur" });
-  } finally {
-    if (connection) await connection.end();
   }
 });
 

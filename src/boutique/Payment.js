@@ -9,8 +9,6 @@ import { loadStripe } from "@stripe/stripe-js";
 import config from "../config.js";
 import FacturationForm from "../components/FacturationForm.js";
 import PhoneInput from "react-phone-number-input";
-import "react-phone-number-input/style.css";
-import TestPopup from "../components/TestPopup.js";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY); // Ta clé publique. A changer pour la prod
 
@@ -57,8 +55,21 @@ function AddressEditModal({ address, onSave, onCancel }) {
     complement_adresse_livraison: address?.complement_adresse_livraison || "",
     code_postal_livraison: address?.code_postal_livraison || "",
     ville_livraison: address?.ville_livraison || "",
+    telephone_livraison: address?.telephone_livraison || "",
   });
-  const [showTestPopup, setShowTestPopup] = useState(true);
+
+  useEffect(() => {
+    setFormData({
+      prenom_livraison: address?.prenom_livraison || "",
+      nom_livraison: address?.nom_livraison || "",
+      adresse_livraison: address?.adresse_livraison || "",
+      complement_adresse_livraison: address?.complement_adresse_livraison || "",
+      code_postal_livraison: address?.code_postal_livraison || "",
+      ville_livraison: address?.ville_livraison || "",
+      telephone_livraison: address?.telephone_livraison || "",
+    });
+  }, [address]);
+
   const [telephoneLivraison, setTelephoneLivraison] = useState(
     address?.telephone_livraison || ""
   );
@@ -117,7 +128,7 @@ function AddressEditModal({ address, onSave, onCancel }) {
         }}
       >
         <h3 style={{ marginBottom: 20 }}>Modifier l'adresse de livraison</h3>
-        {showTestPopup && <TestPopup onClose={() => setShowTestPopup(false)} />}
+
         <form onSubmit={handleSubmit}>
           {[
             { label: "Prénom", name: "prenom_livraison" },
@@ -160,6 +171,34 @@ function AddressEditModal({ address, onSave, onCancel }) {
               />
             </div>
           ))}
+
+          {/* Voici le champ téléphone à ajouter */}
+          <div style={{ marginBottom: 12 }}>
+            <label
+              style={{ display: "block", marginBottom: 4, fontWeight: 500 }}
+            >
+              Téléphone *
+            </label>
+            <PhoneInput
+              international
+              defaultCountry="FR"
+              value={telephoneLivraison}
+              onChange={setTelephoneLivraison}
+              inputComponent={(props) => (
+                <input
+                  {...props}
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                  }}
+                />
+              )}
+              placeholder="Numéro de téléphone*"
+              required
+            />
+          </div>
 
           <div className={styles.toggleRow} style={{ marginTop: 20 }}>
             <label className={styles.switch}>
@@ -524,27 +563,28 @@ const Payment = () => {
   }, []);
 
   useEffect(() => {
-    const panierStocke = JSON.parse(localStorage.getItem("panier")) || [];
-    setPanier(panierStocke);
-
     const token = localStorage.getItem("token");
-    const fetchAdresseLivraison = async () => {
+    async function fetchAdresse() {
       try {
         const res = await fetch(
           `${process.env.REACT_APP_API_URL}/adresse-livraison`,
           {
-            headers: { Authorization: "Bearer " + token },
+            headers: {
+              Authorization: "Bearer " + token,
+            },
           }
         );
         if (res.ok) {
           const data = await res.json();
           setAdresseLivraison(data);
+        } else {
+          console.error("Erreur chargement adresse livraison");
         }
       } catch (error) {
-        console.error("Erreur chargement adresse livraison :", error);
+        console.error("Erreur réseau", error);
       }
-    };
-    fetchAdresseLivraison();
+    }
+    fetchAdresse();
   }, []);
 
   useEffect(() => {
@@ -609,28 +649,36 @@ const Payment = () => {
   }, [panier, fraisPort]);
 
   const handleSaveAddress = async (newAddress) => {
+    const adresseAEnvoyer = {
+      prenom_livraison: newAddress.prenom_livraison,
+      nom_livraison: newAddress.nom_livraison,
+      adresse_livraison: newAddress.adresse_livraison,
+      complement_adresse_livraison: newAddress.complement_adresse_livraison,
+      code_postal_livraison: newAddress.code_postal_livraison,
+      ville_livraison: newAddress.ville_livraison,
+      telephone_livraison: newAddress.telephone_livraison,
+    };
+    console.log(adresseAEnvoyer);
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL}/adresse-livraison`,
+        `${process.env.REACT_APP_API_URL}/persist-adresse`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + token,
           },
-          body: JSON.stringify(newAddress),
+          body: JSON.stringify(adresseAEnvoyer),
         }
       );
       if (res.ok) {
         const updatedAddress = await res.json();
         setAdresseLivraison(updatedAddress);
         setShowAddressEditor(false);
-      } else {
-        alert("Erreur lors de la mise à jour de l'adresse");
       }
     } catch (error) {
-      alert("Erreur lors de la mise à jour de l'adresse");
+      alert("Erreur réseau lors de la mise à jour de l'adresse");
     }
   };
 
@@ -639,14 +687,36 @@ const Payment = () => {
     0
   );
 
-  const handleMethodeChange = (value) => {
+  const handleMethodeChange = async (value) => {
     setMode(value);
     localStorage.setItem("modeLivraison", value);
 
     if (value === "domicile") {
-      setShowAddressPopup(true); // Ouvre popup adresse
+      if (!adresseLivraison) {
+        const token = localStorage.getItem("token");
+        try {
+          const res = await fetch(
+            `${process.env.REACT_APP_API_URL}/adresse-livraison`,
+            {
+              headers: { Authorization: "Bearer " + token },
+            }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setAdresseLivraison(data);
+            console.log(adresseLivraison);
+            setShowAddressPopup(true); // Ouvre la popup après la mise à jour
+          } else {
+            console.error("Erreur chargement adresse livraison");
+          }
+        } catch (error) {
+          console.error("Erreur réseau", error);
+        }
+      } else {
+        setShowAddressPopup(true);
+      }
     } else {
-      setShowAddressPopup(false); // Ferme popup sinon
+      setShowAddressPopup(false);
     }
   };
 
@@ -862,11 +932,12 @@ const Payment = () => {
         )}
       </aside>
 
-      {showAddressPopup && (
+      {showAddressPopup && adresseLivraison && (
         <FacturationForm
           address={adresseLivraison}
           onSave={(newAddress) => {
             setAdresseLivraison(newAddress);
+            handleSaveAddress(newAddress); // sauvegarde immédiate
             setShowAddressPopup(false);
           }}
           onCancel={() => setShowAddressPopup(false)}
