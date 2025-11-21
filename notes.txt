@@ -13,4 +13,6 @@ Impossibilité de retourner vers certaines pages
 Bouton Payer griser si on ne choisit pas un point relais lorsque l'utilisateur click sur le bouton radio
 Revoir l'URL de paiement...
 Responsive
-Supprimer /checkout
+Fil d'ariane + Bouton retour sur la page des produits
+Revoir Livraison à domicile plus tard
+Ajouter bloc adresse de facturation

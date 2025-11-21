@@ -29,6 +29,15 @@ function formatTime(hhmm) {
   const h = hhmm.toString().padStart(4, "0");
   return `${h.slice(0, 2)}:${h.slice(2)}`;
 }
+
+function calculerPoidsMondialRelay(nbProduits) {
+  if (nbProduits <= 3) return 250;
+  if (nbProduits <= 6) return 500;
+  if (nbProduits <= 10) return 750;
+  if (nbProduits <= 15) return 1000;
+  return 2000;
+}
+
 function renderHoraires(horaires) {
   if (!horaires || !Array.isArray(horaires.string)) return "fermé";
   const filtres = horaires.string.filter((v) => {
@@ -558,6 +567,50 @@ const Payment = () => {
   // State clientSecret Stripe
   const [clientSecret, setClientSecret] = useState("");
 
+  const fetchCart = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/cart`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Erreur lors de la récupération du panier");
+      }
+      const data = await res.json();
+      setPanier(data);
+    } catch (error) {
+      console.error("Erreur fetchCart :", error);
+    }
+  };
+
+  // Appel au montage
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  useEffect(() => {
+    if (mode === "relais") {
+      const nbProduits = panier.reduce(
+        (acc, item) => acc + (item.quantite || 0),
+        0
+      );
+      const poidsTotal = calculerPoidsMondialRelay(nbProduits);
+
+      fetch(
+        `${process.env.REACT_APP_API_URL}/mondial-relay-tarif?poids=${poidsTotal}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setFraisPort(data.prix != null ? Number(data.prix) : null);
+        })
+        .catch(() => setFraisPort(null));
+    }
+  }, [mode, panier]);
+
   useEffect(() => {
     localStorage.removeItem("modeLivraison"); // optionnel pour remise à zéro
   }, []);
@@ -606,12 +659,6 @@ const Payment = () => {
           setFraisPort(isNaN(prix) ? null : prix);
         })
         .catch(() => setFraisPort(null));
-    } else if (mode === "relais") {
-      setFraisPort(3.9);
-    } else if (mode === "clickcollect") {
-      setFraisPort(0);
-    } else {
-      setFraisPort(null);
     }
   }, [panier, mode, sousMode]);
 
@@ -650,19 +697,24 @@ const Payment = () => {
 
   const handleSaveAddress = async (newAddress) => {
     const adresseAEnvoyer = {
-      prenom_livraison: newAddress.prenom_livraison,
+      /*prenom_livraison: newAddress.prenom_livraison,
       nom_livraison: newAddress.nom_livraison,
       adresse_livraison: newAddress.adresse_livraison,
       complement_adresse_livraison: newAddress.complement_adresse_livraison,
       code_postal_livraison: newAddress.code_postal_livraison,
       ville_livraison: newAddress.ville_livraison,
-      telephone_livraison: newAddress.telephone_livraison,
+      telephone_livraison: newAddress.telephone_livraison,*/
+      lg_adr1: newAddress.LgAdr1,
+      lg_adr3: newAddress.LgAdr3,
+      information: newAddress.Information,
+      cp: newAddress.CP,
+      ville: newAddress.Ville,
     };
     console.log(adresseAEnvoyer);
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL}/persist-adresse`,
+        `${process.env.REACT_APP_API_URL}/persist-adresse-mondial-relay`,
         {
           method: "PUT",
           headers: {
@@ -734,10 +786,10 @@ const Payment = () => {
         }}
       >
         <h4>Méthodes de livraison</h4>
-        <label
+        {/* <label
           className={styles.livraisonRadio}
           style={{ display: "flex", alignItems: "center", marginBottom: 12 }}
-        >
+        > 
           <input
             type="radio"
             name="mode"
@@ -746,8 +798,8 @@ const Payment = () => {
             onChange={() => handleMethodeChange("domicile")}
             style={{ marginRight: 8 }}
           />
-          Livraison à domicile <span className={styles.deliveryIcon}>🏠</span>
-        </label>
+          Livraison à domicile
+        </label> */}
         {mode === "domicile" && adresseLivraison && (
           <div style={{ marginBottom: 12, marginLeft: 28 }}>
             <div
@@ -800,7 +852,12 @@ const Payment = () => {
         )}
         <label
           className={styles.livraisonRadio}
-          style={{ display: "flex", alignItems: "center", marginBottom: 12 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: 12,
+            flexWrap: "nowrap",
+          }}
         >
           <input
             type="radio"
@@ -810,11 +867,7 @@ const Payment = () => {
             onChange={() => handleMethodeChange("relais")}
             style={{ marginRight: 8 }}
           />
-          Retrait dans un point relais{" "}
-          <span style={{ marginLeft: 7 }}>3,90 €</span>{" "}
-          <span className={styles.deliveryIcon} style={{ marginLeft: 8 }}>
-            🏪
-          </span>
+          Retrait Mondial Relay <span style={{ marginLeft: 7 }}></span>{" "}
           {mode === "relais" && (
             <button
               type="button"
@@ -858,6 +911,17 @@ const Payment = () => {
             postcode={adresseLivraison?.code_postal_livraison || ""}
             onConfirm={(point) => {
               setPointRelais(point);
+              // Préparation de l'objet à persister
+              const relayData = {
+                lg_adr1: point.LgAdr1, // Nom du relais/commerçant
+                information: point.Information || "",
+                lg_adr3: point.LgAdr3,
+                cp: point.CP,
+                ville: point.Ville,
+                num: point.Num, // identifiant Mondial Relay unique
+              };
+              // Après la sélection/validation du point relais
+              localStorage.setItem("relayInfo", JSON.stringify(relayData));
               setShowRelaySelector(false);
             }}
             onCancel={() => setShowRelaySelector(false)}
@@ -867,42 +931,56 @@ const Payment = () => {
       <div className={styles.deliverySection}>
         <aside className={styles.rightColumn}>
           <h3>Commande</h3>
-          {panier.map((item) => (
-            <div key={item.id} className={styles.resumeItem}>
-              <img
-                src={`data:image/jpeg;base64,${item.image}`}
-                alt={item.nom}
-                width={40}
-                height={40}
-              />
-              <div>
-                <div>{item.nom}</div>
+          {panier.map((item) => {
+            console.log(item.image); // ← ICI
+            return (
+              <div key={item.id} className={styles.resumeItem}>
+                {item.image && (
+                  <img
+                    src={`data:image/jpeg;base64,${item.image}`}
+                    alt={item.nom}
+                    width={40}
+                    height={40}
+                  />
+                )}
                 <div>
-                  Format&nbsp;:{" "}
-                  {item.quantite_en_sachet == null ||
-                  item.quantite_en_sachet === 0
-                    ? `Sachet de ${item.quantite_en_g ?? 0} g`
-                    : `Boîte de ${item.quantite_en_sachet ?? 0} infusions`}
-                </div>
-                <div>
-                  x{item.quantite} — {(Number(item.prix) || 0).toFixed(2)} €
+                  <div>{item.nom}</div>
+                  <div>
+                    Format :{" "}
+                    {item.quantite_en_sachet == null ||
+                    item.quantite_en_sachet === 0
+                      ? `Sachet de ${item.quantite_en_g ?? 0} g`
+                      : `Boîte de ${item.quantite_en_sachet ?? 0} infusions`}
+                  </div>
+                  <div>
+                    x{item.quantite} — {(Number(item.prix) || 0).toFixed(2)} €{" "}
+                    <br />
+                    <b>
+                      {" "}
+                      Montant Total :{" "}
+                      {(item.quantite * Number(item.prix)).toFixed(2)} €{" "}
+                    </b>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div className={styles.summaryTotals}>
             <div>
               <span>Sous-total</span>
               <span>{totalProduits.toFixed(2)}€</span>
             </div>
             <div>
-              <span>Frais de port</span>
+              <span>
+                Frais de port ({mode === "relais" ? "Mondial Relay" : sousMode})
+              </span>
               <span>
                 {typeof fraisPort === "number"
                   ? fraisPort.toFixed(2) + " €"
                   : "Calcul en cours..."}
               </span>
             </div>
+
             <div className={styles.totalLine}>
               <span>Total</span>
               <span>

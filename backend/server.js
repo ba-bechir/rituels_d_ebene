@@ -897,10 +897,10 @@ app.put(`${BASE_PATH}/cart/payee`, authMiddleware, async (req, res) => {
       [userId]
     );
 
-    // 3. Créer la nouvelle commande
+    // 3. Créer la nouvelle commande (id_facturation et id_livraison à remettre ultérieurement)
     const [resultCommande] = await connection.execute(
       "INSERT INTO commande (id_utilisateur, created_at, updated_at, paye, commande_preparee, id_facturation, id_livraison, methode_de_livraison) VALUES (?, NOW(), NOW(), 1, 0, ?, ?, ?)",
-      [userId, idFacturation || null, idLivraison || null, modeLivraison]
+      [userId, null, idLivraison, modeLivraison]
     );
     const idCommande = resultCommande.insertId;
 
@@ -1166,71 +1166,76 @@ function authMiddleware(req, res, next) {
   }
 }
 
-app.put(`${BASE_PATH}/persist-adresse`, authMiddleware, async (req, res) => {
-  let connection;
-  try {
-    connection = await getConnection();
+app.put(
+  `${BASE_PATH}/persist-adresse-mondial-relay`,
+  authMiddleware,
+  async (req, res) => {
+    let connection;
+    try {
+      connection = await getConnection();
 
-    const userId = req.user?.id || req.user?.userId;
-    if (!userId) {
-      return res.status(400).json({ error: "Utilisateur non authentifié" });
-    }
+      const userId = req.user?.id || req.user?.userId;
+      if (!userId) {
+        return res.status(400).json({ error: "Utilisateur non authentifié" });
+      }
 
-    const {
-      prenom_livraison,
-      nom_livraison,
-      adresse_livraison,
-      complement_adresse_livraison,
-      code_postal_livraison,
-      ville_livraison,
-      telephone_livraison,
-    } = req.body;
+      const { lg_adr1, lg_adr3, information, cp, ville } = req.body;
 
-    const prenom = prenom_livraison ?? "";
-    const nom = nom_livraison ?? "";
-    const adresse = adresse_livraison ?? "";
-    const complement = complement_adresse_livraison ?? null;
-    const codePostal = code_postal_livraison ?? "";
-    const ville = ville_livraison ?? "";
-    const telephone = telephone_livraison ?? "";
-
-    // Insère l'adresse de livraison
-    const [insertResult] = await connection.execute(
-      `INSERT INTO livraison (
+      // Insère l'adresse de livraison
+      const [insertResult] = await connection.execute(
+        `INSERT INTO livraison (
         prenom_livraison,
         nom_livraison,
         adresse_livraison,
         complement_adresse_livraison,
         code_postal_livraison,
         ville_livraison,
-        telephone_livraison
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [prenom, nom, adresse, complement, codePostal, ville, telephone]
-    );
+        telephone_livraison, 
+          lg_adr1,
+      lg_adr3,
+      information,
+      cp,
+      ville
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          lg_adr1,
+          lg_adr3,
+          information,
+          cp,
+          ville,
+        ]
+      );
 
-    const idLivraison = insertResult.insertId;
+      const idLivraison = insertResult.insertId;
 
-    // Récupère l'id du dernier panier de l'utilisateur
-    const [cartRows] = await connection.execute(
-      `SELECT id FROM cart WHERE id_utilisateur = ? ORDER BY updated_at DESC LIMIT 1`,
-      [userId]
-    );
+      // Récupère l'id du dernier panier de l'utilisateur
+      const [cartRows] = await connection.execute(
+        `SELECT id FROM cart WHERE id_utilisateur = ? ORDER BY updated_at DESC LIMIT 1`,
+        [userId]
+      );
 
-    if (cartRows.length === 0) {
-      return res.status(404).json({ error: "Panier non trouvé" });
-    }
+      if (cartRows.length === 0) {
+        return res.status(404).json({ error: "Panier non trouvé" });
+      }
 
-    const idCart = cartRows[0].id;
+      const idCart = cartRows[0].id;
 
-    // Met à jour le panier avec le nouvel id_livraison
-    await connection.execute(`UPDATE cart SET id_livraison = ? WHERE id = ?`, [
-      idLivraison,
-      idCart,
-    ]);
+      // Met à jour le panier avec le nouvel id_livraison
+      await connection.execute(
+        `UPDATE cart SET id_livraison = ? WHERE id = ?`,
+        [idLivraison, idCart]
+      );
 
-    // Récupère l'adresse complète insérée
-    const [rows] = await connection.execute(
-      `SELECT 
+      // Récupère l'adresse complète insérée
+      const [rows] = await connection.execute(
+        `SELECT 
         prenom_livraison,
         nom_livraison,
         adresse_livraison,
@@ -1239,16 +1244,17 @@ app.put(`${BASE_PATH}/persist-adresse`, authMiddleware, async (req, res) => {
         ville_livraison,
         telephone_livraison 
        FROM livraison WHERE id = ?`,
-      [idLivraison]
-    );
+        [idLivraison]
+      );
 
-    // Renvoie l'objet complet UNE SEULE FOIS
-    res.status(201).json(rows[0]);
-  } catch (error) {
-    console.error("Erreur persist-adresse insert :", error);
-    res.status(500).json({ error: "Erreur serveur" });
+      // Renvoie l'objet complet UNE SEULE FOIS
+      res.status(201).json({ id_livraison: idLivraison, ...rows[0] });
+    } catch (error) {
+      console.error("Erreur persist-adresse insert :", error);
+      res.status(500).json({ error: "Erreur serveur" });
+    }
   }
-});
+);
 
 app.get(`${BASE_PATH}/colissimo-tarif`, async (req, res) => {
   const poids = Number(req.query.poids); // poids en GRAMMES
@@ -1257,6 +1263,22 @@ app.get(`${BASE_PATH}/colissimo-tarif`, async (req, res) => {
   try {
     const [rows] = await connection.execute(
       "SELECT prix FROM colissimo_tarifs WHERE poids_max >= ? ORDER BY poids_max ASC LIMIT 1",
+      [poids]
+    );
+    if (rows.length === 0) return res.status(404).json({ prix: null });
+    res.json({ prix: rows[0].prix });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
+app.get(`${BASE_PATH}/mondial-relay-tarif`, async (req, res) => {
+  const poids = Number(req.query.poids); // poids en GRAMMES
+
+  const connection = await getConnection();
+  try {
+    const [rows] = await connection.execute(
+      "SELECT prix, poids_max FROM mondial_relay_tarifs WHERE poids_max >= ? ORDER BY poids_max ASC LIMIT 1",
       [poids]
     );
     if (rows.length === 0) return res.status(404).json({ prix: null });
@@ -1434,6 +1456,46 @@ app.delete(
     }
   }
 );
+
+app.get(`${BASE_PATH}/cart`, authMiddleware, async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Utilisateur non authentifié" });
+    }
+
+    const [rows] = await connection.execute(
+      `SELECT 
+        p.nom_produit, 
+        p.image,
+        uv.prix, 
+        c.quantite, 
+        uv.quantite_en_g,
+        uv.quantite_en_sachet,
+        uv.prix * c.quantite AS Montant 
+      FROM produit p
+      JOIN cart c ON c.id_produit = p.id
+      JOIN unite_vente uv ON uv.id_produit = p.id
+      WHERE c.id_utilisateur = ?`,
+      [userId]
+    );
+
+    // Convertir le buffer image en base64 pour chaque produit
+    const finalRows = rows.map((row) => ({
+      ...row,
+      image: row.image ? Buffer.from(row.image).toString("base64") : null,
+    }));
+
+    res.json(finalRows);
+  } catch (error) {
+    console.error("Erreur récupération panier :", error);
+    res
+      .status(500)
+      .json({ error: "Erreur serveur lors de la récupération du panier" });
+  }
+});
 
 // ------ Start server ------
 const PORT = process.env.PORT || 3001;
