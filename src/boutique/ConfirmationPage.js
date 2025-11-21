@@ -61,6 +61,8 @@ export default function ConfirmationPage() {
                   lg_adr3: relayInfo.lg_adr3,
                   cp: relayInfo.cp,
                   ville: relayInfo.ville,
+                  prenom_livraison: relayInfo.prenom_livraison,
+                  nom_livraison: relayInfo.nom_livraison,
                   num: relayInfo.num,
                 }),
               }

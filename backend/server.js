@@ -1179,7 +1179,15 @@ app.put(
         return res.status(400).json({ error: "Utilisateur non authentifié" });
       }
 
-      const { lg_adr1, lg_adr3, information, cp, ville } = req.body;
+      const {
+        lg_adr1,
+        lg_adr3,
+        information,
+        cp,
+        ville,
+        prenom_livraison,
+        nom_livraison,
+      } = req.body;
 
       // Insère l'adresse de livraison
       const [insertResult] = await connection.execute(
@@ -1198,8 +1206,8 @@ app.put(
       ville
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          null,
-          null,
+          prenom_livraison,
+          nom_livraison,
           null,
           null,
           null,

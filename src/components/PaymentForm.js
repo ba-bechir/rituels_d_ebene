@@ -122,20 +122,6 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 
   return (
     <form style={styles.form} onSubmit={handleSubmit}>
-      <label htmlFor="cardHolder" style={styles.label}>
-        Nom du titulaire (facultatif)
-      </label>
-      <input
-        id="cardHolder"
-        type="text"
-        placeholder="Nom complet"
-        value={cardHolder}
-        onChange={(e) => setCardHolder(e.target.value)}
-        autoComplete="cc-name"
-        style={styles.input}
-        disabled={processing}
-      />
-
       <label style={styles.label}>Moyen de paiement</label>
       <div style={styles.stripeElementContainer}>
         <PaymentElement />

@@ -562,7 +562,8 @@ const Payment = () => {
   const [showRelaySelector, setShowRelaySelector] = useState(false);
   const [showAddressEditor, setShowAddressEditor] = useState(false);
   const [showAddressPopup, setShowAddressPopup] = useState(false);
-  const [showFacturation, setShowFacturation] = useState(false);
+  const [prenomRelais, setPrenomRelais] = useState("");
+  const [nomRelais, setNomRelais] = useState("");
 
   // State clientSecret Stripe
   const [clientSecret, setClientSecret] = useState("");
@@ -709,6 +710,8 @@ const Payment = () => {
       information: newAddress.Information,
       cp: newAddress.CP,
       ville: newAddress.Ville,
+      prenom_livraison: prenomRelais,
+      nom_livraison: nomRelais,
     };
     console.log(adresseAEnvoyer);
     const token = localStorage.getItem("token");
@@ -887,6 +890,56 @@ const Payment = () => {
             </button>
           )}
         </label>
+
+        {mode === "relais" && (
+          <div style={{ marginTop: 16, marginLeft: 28, maxWidth: 420 }}>
+            <h4>Informations destinataire Point Relais</h4>
+            <div style={{ marginBottom: 12 }}>
+              <label
+                htmlFor="prenom_relais"
+                style={{ display: "block", fontWeight: 500 }}
+              >
+                Prénom *
+              </label>
+              <input
+                id="prenom_relais"
+                type="text"
+                name="prenom_relais"
+                value={prenomRelais}
+                onChange={(e) => setPrenomRelais(e.target.value)}
+                required
+                style={{
+                  width: "100%",
+                  padding: 8,
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label
+                htmlFor="nom_relais"
+                style={{ display: "block", fontWeight: 500 }}
+              >
+                Nom *
+              </label>
+              <input
+                id="nom_relais"
+                type="text"
+                name="nom_relais"
+                value={nomRelais}
+                onChange={(e) => setNomRelais(e.target.value)}
+                required
+                style={{
+                  width: "100%",
+                  padding: 8,
+                  borderRadius: 4,
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+          </div>
+        )}
         {mode === "relais" && pointRelais && (
           <div style={{ marginBottom: 12, marginLeft: 20, color: "#2671ff" }}>
             <strong>Point relais sélectionné :</strong>
@@ -919,6 +972,8 @@ const Payment = () => {
                 cp: point.CP,
                 ville: point.Ville,
                 num: point.Num, // identifiant Mondial Relay unique
+                prenom_livraison: prenomRelais,
+                nom_livraison: nomRelais,
               };
               // Après la sélection/validation du point relais
               localStorage.setItem("relayInfo", JSON.stringify(relayData));
