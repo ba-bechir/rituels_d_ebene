@@ -1505,6 +1505,23 @@ app.get(`${BASE_PATH}/cart`, authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/details-commande/:id", authMiddleware, async (req, res) => {
+  const id_commande = req.params.id;
+  let connection = await getConnection();
+  const [rows] = await connection.execute(
+    `SELECT ca.id_commande, p.nom_produit, ca.quantite, ca.prix_unitaire, u.nom, u.prenom
+     FROM commande_article ca
+     JOIN produit p ON ca.id_produit = p.id
+     JOIN commande c ON ca.id_commande = c.id
+     JOIN livraison l ON c.id_livraison = l.id
+     JOIN utilisateur u ON c.id_utilisateur = u.id
+     WHERE ca.id_commande = ?`,
+    [id_commande]
+  );
+  console.log(rows);
+  res.json(rows);
+});
+
 // ------ Start server ------
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, HOST, () => {

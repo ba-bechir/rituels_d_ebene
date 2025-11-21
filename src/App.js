@@ -23,6 +23,7 @@ import Payment from "./boutique/Payment.js";
 import "leaflet/dist/leaflet.css";
 import ConfirmationPage from "./boutique/ConfirmationPage.js";
 import CommandeList from "./admin/orders/CommandeList.js";
+import CommandeDetails from "./admin/orders/CommandeDetails.js";
 
 function App() {
   const location = useLocation();
@@ -109,6 +110,15 @@ function App() {
           element={
             <AdminRoute>
               <CommandeList />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/details-commande/:id"
+          element={
+            <AdminRoute>
+              <CommandeDetails />
             </AdminRoute>
           }
         />
